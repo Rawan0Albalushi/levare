@@ -41,7 +41,7 @@ function Locations({ group, max = 3, t }) {
 function PartCard({ part, t, lang, onOpen }) {
     const group = part.sib;
     return (
-        <div className="card" role="button" tabIndex={0} onClick={() => onOpen(part)} onKeyDown={(event) => { if (event.key === 'Enter') onOpen(part); }}>
+        <div className={`card ${part.q > 0 ? 'in' : 'out'}`} role="button" tabIndex={0} onClick={() => onOpen(part)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onOpen(part); } }}>
             <div className="row1">
                 <div className="thumb"><PartGlyph part={part} /></div>
                 <div className="ids">
@@ -234,7 +234,7 @@ export function CatalogPage({ parts, byPn, lang, t, whyLabels, onNotice }) {
                                 <Fragment key={`${group.cat}-${group.label}`}>
                                     <tr className="gh"><td colSpan={7}><div className="ghead"><h2>{group.label}</h2>{cat === 'all' ? <span className="k cat-k">{t(group.cat)}</span> : null}<span className="k">{group.n}</span></div></td></tr>
                                     {group.items.map((part) => (
-                                        <tr key={part.k} onClick={() => setOpen(part)}>
+                                        <tr className={part.q > 0 ? 'in' : 'out'} key={part.k} tabIndex={0} onClick={() => setOpen(part)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setOpen(part); } }}>
                                             <td><div className="thumb"><PartGlyph part={part} /></div></td>
                                             <td className="mono">{part.sib.map((item) => <div key={item.k}><b>{item.pn || '—'}</b></div>)}</td>
                                             <td className="mono">{part.sib.map((item) => <div key={item.k}>{item.id || '—'}</div>)}</td>
