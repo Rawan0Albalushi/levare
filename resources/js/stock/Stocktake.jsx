@@ -55,7 +55,7 @@ function Home({ locations, items, t, s, onCreate }) {
     const sorted = [...items].sort((a, b) => (a.status === 'prog' ? 0 : 1) - (b.status === 'prog' ? 0 : 1) || String(b.created).localeCompare(String(a.created)));
 
     return (
-        <main className="wrap">
+        <main className="wrap stock-page">
             <div className="st-head">
                 <div><h1>{s('title')}</h1><p>{s('sub')}</p></div>
                 <div className="st-btns"><button type="button" className="btn primary" onClick={() => setCreating(true)}>+ {s('new')}</button></div>
@@ -96,12 +96,13 @@ function Home({ locations, items, t, s, onCreate }) {
                 </div>
             </div>
             <div className="twrap">
-                <table className="parts">
+                <table className="parts loc-sheet">
+                    <colgroup><col className="c-loc" /><col className="c-res" /><col className="c-n" /><col className="c-n" /><col /></colgroup>
                     <thead><tr><th>{s('loc')}</th><th>{s('result')}</th><th>{s('colLines')}</th><th>{s('qtyT')}</th><th>{s('pn')}</th></tr></thead>
                     <tbody>
                         {shown.slice(0, limit).map((location) => (
-                            <tr key={location.name}>
-                                <td className="mono"><b><Notes value={location.name} /></b></td>
+                            <tr key={location.name} className={location.filled ? 'in' : 'out'}>
+                                <td className="mono loc-cell"><b><Notes value={location.name} /></b></td>
                                 <td>{location.filled ? <span className="rchip r-match">{s('locFilled')}</span> : <span className="rchip r-missing">{s('locEmpty')}</span>}</td>
                                 <td className="mono">{location.lines.length}</td>
                                 <td className="mono">{location.filled ? fmtQ(location.qty) : '0'}</td>
@@ -219,7 +220,7 @@ function Session({ items, employees, setEmployees, parts, lang, s, t, onSave, on
         return () => clearInterval(timer);
     }, []);
 
-    if (!stocktake) return <main className="wrap"><div className="empty-st">{s('nothing')}</div></main>;
+    if (!stocktake) return <main className="wrap stock-page"><div className="empty-st">{s('nothing')}</div></main>;
 
     const summary = counts(stocktake);
     const progress = plan(stocktake, summary);
@@ -255,7 +256,7 @@ function Session({ items, employees, setEmployees, parts, lang, s, t, onSave, on
     }
 
     return (
-        <main className="wrap">
+        <main className="wrap stock-page">
             <div className="st-head">
                 <div><h1>{stocktake.name || stocktake.id}</h1><p className="mono">{stocktake.name ? `${stocktake.id} · ` : ''}{stocktake.cat === 'all' ? s('allSections') : t(stocktake.cat)}</p></div>
                 <div className="st-btns">
@@ -297,7 +298,7 @@ function Session({ items, employees, setEmployees, parts, lang, s, t, onSave, on
                                     <b className="mono lname2"><Notes value={location.n} /></b>
                                     <span className="badge">{location.e ? s('sysEmpty') : location.lines.length}</span>
                                     <span className="grow" />
-                                    <span className={`rchip ${location.done ? 'r-match' : ''}`}>{location.done ? s('doneS') : s('pendingS')}</span>
+                                    <span className={`rchip ${location.done ? 'r-match' : 'r-pending'}`}>{location.done ? s('doneS') : s('pendingS')}</span>
                                 </button>
                                 {open ? (
                                     <div className="ldetail">
