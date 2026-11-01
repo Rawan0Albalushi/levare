@@ -297,6 +297,11 @@ function Fact({ label, children }) {
 }
 
 export function PartDrawer({ part, parts, byPn, t, whyLabels, onOpen, onClose }) {
+    useEffect(() => {
+        const previous = document.body.style.overflow;
+        document.body.style.overflow = 'hidden';
+        return () => { document.body.style.overflow = previous; };
+    }, []);
     const alts = altList(part, parts, byPn);
     const similar = similarParts(part, alts);
     const group = part.sib;
@@ -307,14 +312,14 @@ export function PartDrawer({ part, parts, byPn, t, whyLabels, onOpen, onClose })
     return (
         <>
             <div className="scrim on" onClick={onClose} />
-            <aside className="drawer on" aria-hidden="false">
+            <aside className="drawer on" role="dialog" aria-modal="true" aria-labelledby="part-title">
                 <div className="dhead"><button type="button" className="x" onClick={onClose} aria-label="close">×</button></div>
                 <div className="dbody">
                     <div className="dhero">
                         <div className="thumb"><PartGlyph part={part} /></div>
                         <div className="ids">
                             <div className="lbl">{t(part.pn ? 'partNo' : 'itemCode')} <Badges part={part} t={t} /></div>
-                            <div className="id mono">{mainCode(part, t('noCode'))}</div>
+                            <div className="id mono" id="part-title">{mainCode(part, t('noCode'))}</div>
                             {part.pn && part.id ? <div className="pn">{t('itemCode')}: <span className="mono">{part.id}</span></div> : null}
                             <div style={{ marginTop: 8 }}><Qty part={part} outLabel={t('out')} /></div>
                         </div>
