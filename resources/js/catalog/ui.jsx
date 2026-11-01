@@ -1,6 +1,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { splitNotes, fmtQ, locsOf, mainCode, sumQ, altList, similarParts, searchParts, categoryCounts, catalogStats, uniqDesc, groupsOf, nearCodes, looseMatches } from './logic';
-import { CategoryGlyph, PartGlyph, PinIcon, SearchIcon, CardsIcon, TableIcon } from '../icons';
+import { CategoryGlyph, PartGlyph, PinIcon, SearchIcon, CardsIcon, TableIcon, DownloadIcon, UploadIcon } from '../icons';
 
 export function Notes({ value }) {
     const { main, notes } = splitNotes(value);
@@ -99,6 +99,7 @@ export function CatalogPage({ parts, byPn, lang, t, whyLabels, onNotice }) {
     const stats = useMemo(() => catalogStats(parts), [parts]);
     const groups = useMemo(() => groupsOf(cards, limit), [cards, limit]);
     const exact = query.trim() && parts.find((part) => part.id.toLowerCase() === query.trim().toLowerCase() || part.pn.toLowerCase() === query.trim().toLowerCase());
+    const stockShare = stats.items ? Math.round((stats.inStock / stats.items) * 100) : 0;
 
     useEffect(() => {
         const onKey = (event) => {
@@ -153,44 +154,74 @@ export function CatalogPage({ parts, byPn, lang, t, whyLabels, onNotice }) {
                     <input id="q" type="search" autoComplete="off" spellCheck="false" placeholder={t('placeholder')} value={query} onChange={(event) => { setQuery(event.target.value); setLimit(120); }} />
                     <button type="button" className="clear" aria-label="clear" onClick={() => setQuery('')}>×</button>
                 </div>
-                <div className="hint">{lang === 'ar' ? <>جرّب: <kbd>10013099</kbd> أو <kbd>sleeve 400</kbd> أو <kbd>S1D5</kbd></> : <>Try: <kbd>10013099</kbd> or <kbd>sleeve 400</kbd> or <kbd>S1D5</kbd></>}</div>
-                <div className="stats">
-                    {[[stats.items, 'statParts'], [stats.inStock, 'statStock'], [stats.out, 'statOut'], [stats.locations, 'statLocs']].map(([value, key]) => (
-                        <span className="stat" key={key}><b className="mono">{value.toLocaleString('en-US')}</b>{t(key)}</span>
-                    ))}
-                </div>
             </section>
 
-            <nav className="cats" aria-label={t('category')}>
-                {Object.entries(counts).map(([key, count]) => (
-                    <button type="button" className={`cat ${cat === key ? 'on' : ''}`} key={key} onClick={() => { setCat(key); setLimit(120); }}>
-                        <CategoryGlyph name={key} />
-                        <span className="n">{t(key)}</span>
-                        <span className="c mono">{count.toLocaleString('en-US')} {t('parts')}</span>
-                    </button>
-                ))}
-            </nav>
-
-            <div className="toolbar">
-                <div className="count"><b>{list.length.toLocaleString('en-US')}</b> {t('results')}</div>
-                <div className="tools">
-                    <button type="button" className="btn sm" onClick={exportExcel}>⬇ Excel</button>
-                    <button type="button" className="btn sm" disabled={importing} onClick={() => fileRef.current?.click()}>{importing ? t('importing') : '⬆ Excel'}</button>
-                    <input ref={fileRef} type="file" accept=".xlsx,.xlsb,.xls,.xlsm" multiple hidden onChange={(event) => { const files = event.target.files; event.target.value = ''; if (files?.length) importFiles(files); }} />
-                    <div className="seg stock" role="group">
-                        {[['all', 'stockAll'], ['in', 'stockIn'], ['out', 'stockOut']].map(([key, label]) => (
-                            <button type="button" key={key} className={stock === key ? 'on' : ''} onClick={() => { setStock(key); setLimit(120); }}>
-                                {key !== 'all' ? <span className={`dot ${key === 'in' ? 'ok' : 'out'}`} /> : null}
-                                <span>{t(label)}</span>
-                            </button>
-                        ))}
+            <section className="deck" aria-label={t('deckLabel')}>
+                <div className="stats">
+                    {[
+                        [stats.items, 'statParts', 'items'],
+                        [stats.inStock, 'statStock', 'stock'],
+                        [stats.out, 'statOut', 'depleted'],
+                        [stats.locations, 'statLocs', 'places'],
+                    ].map(([value, key, tone]) => (
+                        <div className={`stat ${tone}`} key={key}>
+                            <b className="mono">{value.toLocaleString('en-US')}</b>
+                            <span className="sl">{t(key)}</span>
+                        </div>
+                    ))}
+                </div>
+                <div className="meter">
+                    <div
+                        className="track"
+                        role="img"
+                        aria-label={`${stats.inStock.toLocaleString('en-US')} ${t('statStock')}, ${stats.out.toLocaleString('en-US')} ${t('statOut')}`}
+                    >
+                        <i style={{ width: `${stockShare}%` }} />
                     </div>
-                    <div className="seg" role="group">
-                        <button type="button" className={view === 'cards' ? 'on' : ''} onClick={() => { setView('cards'); localStorage.setItem('levare-view', 'cards'); }}><CardsIcon /><span>{t('viewCards')}</span></button>
-                        <button type="button" className={view === 'table' ? 'on' : ''} onClick={() => { setView('table'); localStorage.setItem('levare-view', 'table'); }}><TableIcon /><span>{t('viewTable')}</span></button>
+                    <span className="cap"><b className="mono">{stockShare}%</b> {t('statStock')}</span>
+                </div>
+
+                <nav className="cats" aria-label={t('category')}>
+                    {Object.entries(counts).map(([key, count]) => (
+                        <button
+                            type="button"
+                            className={`cat ${cat === key ? 'on' : ''}`}
+                            key={key}
+                            aria-pressed={cat === key}
+                            onClick={() => { setCat(key); setLimit(120); }}
+                        >
+                            <span className="cat-ico"><CategoryGlyph name={key} /></span>
+                            <span className="cat-txt">
+                                <span className="n">{t(key)}</span>
+                                <span className="c mono">{count.toLocaleString('en-US')}</span>
+                            </span>
+                        </button>
+                    ))}
+                </nav>
+
+                <div className="toolbar">
+                    <div className="count"><b className="mono">{list.length.toLocaleString('en-US')}</b> <span>{t('results')}</span></div>
+                    <div className="tools">
+                        <div className="seg stock" role="group" aria-label={t('stockState')}>
+                            {[['all', 'stockAll'], ['in', 'stockIn'], ['out', 'stockOut']].map(([key, label]) => (
+                                <button type="button" key={key} className={stock === key ? 'on' : ''} aria-pressed={stock === key} onClick={() => { setStock(key); setLimit(120); }}>
+                                    {key !== 'all' ? <span className={`dot ${key === 'in' ? 'ok' : 'out'}`} /> : null}
+                                    <span>{t(label)}</span>
+                                </button>
+                            ))}
+                        </div>
+                        <div className="seg" role="group" aria-label={t('viewMode')}>
+                            <button type="button" className={view === 'cards' ? 'on' : ''} aria-pressed={view === 'cards'} onClick={() => { setView('cards'); localStorage.setItem('levare-view', 'cards'); }}><CardsIcon /><span>{t('viewCards')}</span></button>
+                            <button type="button" className={view === 'table' ? 'on' : ''} aria-pressed={view === 'table'} onClick={() => { setView('table'); localStorage.setItem('levare-view', 'table'); }}><TableIcon /><span>{t('viewTable')}</span></button>
+                        </div>
+                    </div>
+                    <div className="fileacts">
+                        <button type="button" className="btn sm" onClick={exportExcel} aria-label={t('exportExcel')}><DownloadIcon /><span>Excel</span></button>
+                        <button type="button" className="btn sm" disabled={importing} aria-label={t('importExcel')} onClick={() => fileRef.current?.click()}><UploadIcon /><span>{importing ? t('importing') : 'Excel'}</span></button>
+                        <input ref={fileRef} type="file" accept=".xlsx,.xlsb,.xls,.xlsm" multiple hidden onChange={(event) => { const files = event.target.files; event.target.value = ''; if (files?.length) importFiles(files); }} />
                     </div>
                 </div>
-            </div>
+            </section>
 
             <Notice query={query} exact={exact} list={list} parts={parts} byPn={byPn} t={t} lang={lang} whyLabels={whyLabels} onOpen={setOpen} onQuery={setQuery} />
 

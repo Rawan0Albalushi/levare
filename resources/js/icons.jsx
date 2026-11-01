@@ -24,6 +24,12 @@ export function CardsIcon() {
 export function TableIcon() {
     return <Svg><path d="M4 6h16M4 12h16M4 18h16" /></Svg>;
 }
+export function DownloadIcon() {
+    return <Svg><path d="M12 4v10" /><path d="m8 10 4 4 4-4" /><path d="M5 19h14" /></Svg>;
+}
+export function UploadIcon() {
+    return <Svg><path d="M12 14V4" /><path d="m8 8 4-4 4 4" /><path d="M5 19h14" /></Svg>;
+}
 export function BackIcon() {
     return <Svg><path d="M19 12H5M11 6l-6 6 6 6" /></Svg>;
 }
