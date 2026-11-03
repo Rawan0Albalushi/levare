@@ -98,9 +98,9 @@ class EquipmentTest extends TestCase
         $this->postJson('/api/equipment/import', [
             'rows' => [
                 $this->payload(),
-                $this->payload(['port_number' => 'P-15', 'condition' => 'broken']),
+                $this->payload(['port_number' => 'P-15', 'recorded_on' => 'not-a-date']),
             ],
-        ])->assertUnprocessable()->assertJsonValidationErrors(['rows.1.condition']);
+        ])->assertUnprocessable()->assertJsonValidationErrors(['rows.1.recorded_on']);
 
         $this->assertSame(0, Equipment::query()->count());
 
@@ -109,14 +109,18 @@ class EquipmentTest extends TestCase
                 $this->payload(),
                 $this->payload([
                     'port_number' => 'P-15',
-                    'condition' => 'repaired',
+                    'condition' => 'Needs inspection',
                     'tested_at' => '2026-10-20',
                 ]),
             ],
         ])->assertCreated()->assertJsonPath('imported', 2);
 
         $this->assertSame(2, Equipment::query()->count());
-        $this->assertDatabaseHas('equipment', ['port_number' => 'P-15', 'tested_at' => '2026-10-20']);
+        $this->assertDatabaseHas('equipment', [
+            'port_number' => 'P-15',
+            'condition' => 'Needs inspection',
+            'tested_at' => '2026-10-20',
+        ]);
     }
 
     public function test_import_stores_blank_cells_as_empty(): void

@@ -74,11 +74,12 @@ export function normalizeDate(value) {
 }
 
 export function normalizeCondition(value) {
-    const text = String(value ?? '').trim().toLowerCase();
+    const original = String(value ?? '').trim();
+    const text = original.toLowerCase();
     if (!text) return '';
     if (['new', 'جديد', 'جديدة', 'n'].includes(text)) return 'new';
     if (['repaired', 'repair', 'مصلح', 'مصلحة', 'r'].includes(text)) return 'repaired';
-    return null;
+    return original.slice(0, 120);
 }
 
 function asText(value) {
@@ -120,8 +121,7 @@ export function rowsFromSheet(matrix) {
         const condition = normalizeCondition(draft.condition);
         if (recorded === null) errors.push({ row, code: 'date' });
         if (tested === null) errors.push({ row, code: 'tested' });
-        if (condition === null) errors.push({ row, code: 'condition' });
-        if (recorded === null || tested === null || condition === null) continue;
+        if (recorded === null || tested === null) continue;
         records.push({
             port_number: asText(draft.port_number),
             serial_number: asText(draft.serial_number),

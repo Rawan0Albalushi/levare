@@ -57,7 +57,7 @@ class EquipmentController extends Controller
 
     public function update(Request $request, Equipment $equipment): JsonResponse
     {
-        $equipment->update($request->validate($this->rules()));
+        $equipment->update($request->validate($this->rules(anyCondition: true)));
 
         return response()->json(['equipment' => $equipment->toDocument()]);
     }
@@ -89,7 +89,7 @@ class EquipmentController extends Controller
             'rows.*.assigned_well' => ['nullable', 'string', 'max:120'],
             'rows.*.recorded_on' => ['nullable', 'date_format:Y-m-d'],
             'rows.*.location' => ['nullable', 'string', 'max:120'],
-            'rows.*.condition' => ['nullable', 'in:new,repaired'],
+            'rows.*.condition' => ['nullable', 'string', 'max:120'],
             'rows.*.tested_at' => ['nullable', 'date_format:Y-m-d'],
         ]);
 
@@ -120,7 +120,7 @@ class EquipmentController extends Controller
     /**
      * @return array<string, array<int, string>>
      */
-    private function rules(): array
+    private function rules(bool $anyCondition = false): array
     {
         return [
             'port_number' => ['required', 'string', 'max:80'],
@@ -129,7 +129,9 @@ class EquipmentController extends Controller
             'assigned_well' => ['nullable', 'string', 'max:120'],
             'recorded_on' => ['required', 'date_format:Y-m-d'],
             'location' => ['nullable', 'string', 'max:120'],
-            'condition' => ['required', 'in:new,repaired'],
+            'condition' => $anyCondition
+                ? ['required', 'string', 'max:120']
+                : ['required', 'string', 'in:new,repaired'],
         ];
     }
 }

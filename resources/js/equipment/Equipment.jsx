@@ -181,11 +181,7 @@ export function EquipmentPage({ lang, e, onNotice }) {
             nextPage += 1;
         } while (nextPage <= lastPage && nextPage <= 200);
         const body = records.map((item) => EQUIPMENT_COLUMNS.map(([key]) => {
-            if (key === 'condition') {
-                if (item.condition === 'repaired') return e('repaired');
-                if (item.condition === 'new') return e('new');
-                return '';
-            }
+            if (key === 'condition') return conditionText(item.condition, e);
             return item[key] || '';
         }));
         const sheet = XLSX.utils.aoa_to_sheet([header, ...body]);
@@ -329,7 +325,7 @@ export function EquipmentPage({ lang, e, onNotice }) {
                                     <td>{item.assigned_well || '—'}</td>
                                     <td className="mono">{item.recorded_on || '—'}</td>
                                     <td>{item.location || '—'}</td>
-                                    <td>{item.condition ? <span className={`badge ${item.condition === 'new' ? 'done' : ''}`}>{item.condition === 'repaired' ? e('repaired') : e('new')}</span> : '—'}</td>
+                                    <td><ConditionValue value={item.condition} e={e} /></td>
                                     <td className="mono">{item.tested_at || '—'}</td>
                                     <td>
                                         <div className="eq-actions">
@@ -470,6 +466,7 @@ function EquipmentForm({ item, e, onClose, onSaved, onFail, onTest }) {
                         <Field label={e('condition')} error={errors.condition}>
                             <select className="fsel" value={form.condition} onChange={(event) => setField('condition', event.target.value)}>
                                 {form.condition === '' ? <option value=""></option> : null}
+                                {form.condition && form.condition !== 'new' && form.condition !== 'repaired' ? <option value={form.condition}>{form.condition}</option> : null}
                                 <option value="new">{e('new')}</option>
                                 <option value="repaired">{e('repaired')}</option>
                             </select>
@@ -487,6 +484,21 @@ function EquipmentForm({ item, e, onClose, onSaved, onFail, onTest }) {
             </div>
         </div>
     );
+}
+
+function ConditionValue({ value, e }) {
+    if (!value) return '—';
+    if (value === 'new' || value === 'repaired') {
+        return <span className={`badge ${value === 'new' ? 'done' : ''}`}>{conditionText(value, e)}</span>;
+    }
+
+    return conditionText(value, e);
+}
+
+function conditionText(value, e) {
+    if (value === 'repaired') return e('repaired');
+    if (value === 'new') return e('new');
+    return value || '';
 }
 
 function Field({ label, error, children }) {
