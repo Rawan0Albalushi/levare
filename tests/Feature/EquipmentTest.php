@@ -119,6 +119,48 @@ class EquipmentTest extends TestCase
         $this->assertDatabaseHas('equipment', ['port_number' => 'P-15', 'tested_at' => '2026-10-20']);
     }
 
+    public function test_import_stores_blank_cells_as_empty(): void
+    {
+        $this->postJson('/api/equipment/import', [
+            'rows' => [
+                [
+                    'port_number' => 'P-20',
+                    'serial_number' => null,
+                    'description' => null,
+                    'assigned_well' => null,
+                    'recorded_on' => null,
+                    'location' => null,
+                    'condition' => null,
+                    'tested_at' => null,
+                ],
+                [
+                    'port_number' => null,
+                    'serial_number' => 'SN-ONLY',
+                    'description' => '',
+                    'assigned_well' => null,
+                    'recorded_on' => '',
+                    'location' => null,
+                    'condition' => '',
+                    'tested_at' => null,
+                ],
+            ],
+        ])->assertCreated()->assertJsonPath('imported', 2);
+
+        $this->assertDatabaseHas('equipment', [
+            'port_number' => 'P-20',
+            'serial_number' => null,
+            'recorded_on' => null,
+            'condition' => null,
+            'tested_at' => null,
+        ]);
+        $this->assertDatabaseHas('equipment', [
+            'port_number' => null,
+            'serial_number' => 'SN-ONLY',
+            'recorded_on' => null,
+            'condition' => null,
+        ]);
+    }
+
     public function test_sending_to_test_writes_today_once(): void
     {
         $this->travelTo('2026-11-03 09:00:00');

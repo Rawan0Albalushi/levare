@@ -75,7 +75,7 @@ export function normalizeDate(value) {
 
 export function normalizeCondition(value) {
     const text = String(value ?? '').trim().toLowerCase();
-    if (!text) return 'new';
+    if (!text) return '';
     if (['new', 'جديد', 'جديدة', 'n'].includes(text)) return 'new';
     if (['repaired', 'repair', 'مصلح', 'مصلحة', 'r'].includes(text)) return 'repaired';
     return null;
@@ -89,7 +89,7 @@ function asText(value) {
     return String(value).trim();
 }
 
-export function rowsFromSheet(matrix, today) {
+export function rowsFromSheet(matrix) {
     const limit = Math.min(matrix.length, 8);
     let header = null;
     for (let index = 0; index < limit; index += 1) {
@@ -115,23 +115,21 @@ export function rowsFromSheet(matrix, today) {
             continue;
         }
         const row = index + 1;
-        const port = asText(draft.port_number);
         const recorded = normalizeDate(draft.recorded_on);
         const tested = normalizeDate(draft.tested_at);
         const condition = normalizeCondition(draft.condition);
-        if (!port) errors.push({ row, code: 'port' });
         if (recorded === null) errors.push({ row, code: 'date' });
         if (tested === null) errors.push({ row, code: 'tested' });
-        if (!condition) errors.push({ row, code: 'condition' });
-        if (!port || recorded === null || tested === null || !condition) continue;
+        if (condition === null) errors.push({ row, code: 'condition' });
+        if (recorded === null || tested === null || condition === null) continue;
         records.push({
-            port_number: port,
+            port_number: asText(draft.port_number),
             serial_number: asText(draft.serial_number),
             description: asText(draft.description),
             assigned_well: asText(draft.assigned_well),
-            recorded_on: recorded || today,
+            recorded_on: recorded || null,
             location: asText(draft.location),
-            condition,
+            condition: condition || null,
             tested_at: tested || null,
         });
     }

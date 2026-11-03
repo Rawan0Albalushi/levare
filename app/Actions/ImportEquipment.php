@@ -17,13 +17,13 @@ class ImportEquipment
 
         foreach ($rows as $row) {
             $payload[] = [
-                'port_number' => $row['port_number'],
+                'port_number' => $this->blank($row['port_number'] ?? null),
                 'serial_number' => $this->blank($row['serial_number'] ?? null),
                 'description' => $this->blank($row['description'] ?? null),
                 'assigned_well' => $this->blank($row['assigned_well'] ?? null),
-                'recorded_on' => $row['recorded_on'],
+                'recorded_on' => $this->blank($row['recorded_on'] ?? null),
                 'location' => $this->blank($row['location'] ?? null),
-                'condition' => $row['condition'],
+                'condition' => $this->blank($row['condition'] ?? null),
                 'tested_at' => $this->blank($row['tested_at'] ?? null),
                 'created_at' => $now,
                 'updated_at' => $now,

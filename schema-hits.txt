@@ -1,0 +1,2 @@
+FINDSTR: Cannot open function
+FINDSTR: Cannot open change\ vendor\laravel\framework\src\Illuminate\Database\Schema\Blueprint.php vendor\laravel\framework\src\Illuminate\Database\Schema\ColumnDefinition.php 

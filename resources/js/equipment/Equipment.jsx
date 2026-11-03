@@ -144,7 +144,7 @@ export function EquipmentPage({ lang, e, onNotice }) {
             const book = XLSX.read(await file.arrayBuffer(), { type: 'array', cellDates: true });
             const sheet = book.Sheets[book.SheetNames[0]];
             const matrix = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: true, defval: '' });
-            const parsed = rowsFromSheet(matrix, dateKey());
+            const parsed = rowsFromSheet(matrix);
             if (parsed.errors.length) {
                 const reason = { headers: 'headers', tooMany: 'tooMany', port: 'portErr', date: 'dateErr', tested: 'testedErr', condition: 'conditionErr' };
                 onNotice(parsed.errors.slice(0, 4).map((error) => (
@@ -181,7 +181,11 @@ export function EquipmentPage({ lang, e, onNotice }) {
             nextPage += 1;
         } while (nextPage <= lastPage && nextPage <= 200);
         const body = records.map((item) => EQUIPMENT_COLUMNS.map(([key]) => {
-            if (key === 'condition') return item.condition === 'repaired' ? e('repaired') : e('new');
+            if (key === 'condition') {
+                if (item.condition === 'repaired') return e('repaired');
+                if (item.condition === 'new') return e('new');
+                return '';
+            }
             return item[key] || '';
         }));
         const sheet = XLSX.utils.aoa_to_sheet([header, ...body]);
@@ -319,13 +323,13 @@ export function EquipmentPage({ lang, e, onNotice }) {
                         <tbody>
                             {rows.map((item) => (
                                 <tr key={item.id} tabIndex={0} onClick={() => { setCreating(false); setEditing(item); }} onKeyDown={(event) => { if (event.key === 'Enter') { setCreating(false); setEditing(item); } }}>
-                                    <td className="mono">{item.port_number}</td>
+                                    <td className="mono">{item.port_number || '—'}</td>
                                     <td className="mono">{item.serial_number || '—'}</td>
                                     <td>{item.description || '—'}</td>
                                     <td>{item.assigned_well || '—'}</td>
-                                    <td className="mono">{item.recorded_on}</td>
+                                    <td className="mono">{item.recorded_on || '—'}</td>
                                     <td>{item.location || '—'}</td>
-                                    <td><span className={`badge ${item.condition === 'new' ? 'done' : ''}`}>{item.condition === 'repaired' ? e('repaired') : e('new')}</span></td>
+                                    <td>{item.condition ? <span className={`badge ${item.condition === 'new' ? 'done' : ''}`}>{item.condition === 'repaired' ? e('repaired') : e('new')}</span> : '—'}</td>
                                     <td className="mono">{item.tested_at || '—'}</td>
                                     <td>
                                         <div className="eq-actions">
@@ -379,9 +383,9 @@ function EquipmentForm({ item, e, onClose, onSaved, onFail, onTest }) {
         serial_number: item.serial_number || '',
         description: item.description || '',
         assigned_well: item.assigned_well || '',
-        recorded_on: item.recorded_on || dateKey(),
+        recorded_on: item.recorded_on || '',
         location: item.location || '',
-        condition: item.condition || 'new',
+        condition: item.condition || '',
     } : emptyForm());
     const [errors, setErrors] = useState({});
     const [saving, setSaving] = useState(false);
@@ -406,6 +410,7 @@ function EquipmentForm({ item, e, onClose, onSaved, onFail, onTest }) {
         const next = {};
         if (!form.port_number.trim()) next.port_number = e('needPort');
         if (!form.recorded_on) next.recorded_on = e('needDate');
+        if (!form.condition) next.condition = e('conditionErr');
         setErrors(next);
         if (Object.keys(next).length) return;
         setSaving(true);
@@ -462,8 +467,9 @@ function EquipmentForm({ item, e, onClose, onSaved, onFail, onTest }) {
                         <Field label={e('date')} error={errors.recorded_on}>
                             <input className="mono" type="date" value={form.recorded_on} onChange={(event) => setField('recorded_on', event.target.value)} required />
                         </Field>
-                        <Field label={e('condition')}>
+                        <Field label={e('condition')} error={errors.condition}>
                             <select className="fsel" value={form.condition} onChange={(event) => setField('condition', event.target.value)}>
+                                {form.condition === '' ? <option value=""></option> : null}
                                 <option value="new">{e('new')}</option>
                                 <option value="repaired">{e('repaired')}</option>
                             </select>

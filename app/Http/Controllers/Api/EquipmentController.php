@@ -83,13 +83,13 @@ class EquipmentController extends Controller
     {
         $data = $request->validate([
             'rows' => ['required', 'array', 'min:1', 'max:5000'],
-            'rows.*.port_number' => ['required', 'string', 'max:80'],
+            'rows.*.port_number' => ['nullable', 'string', 'max:80'],
             'rows.*.serial_number' => ['nullable', 'string', 'max:80'],
             'rows.*.description' => ['nullable', 'string', 'max:2000'],
             'rows.*.assigned_well' => ['nullable', 'string', 'max:120'],
-            'rows.*.recorded_on' => ['required', 'date_format:Y-m-d'],
+            'rows.*.recorded_on' => ['nullable', 'date_format:Y-m-d'],
             'rows.*.location' => ['nullable', 'string', 'max:120'],
-            'rows.*.condition' => ['required', 'in:new,repaired'],
+            'rows.*.condition' => ['nullable', 'in:new,repaired'],
             'rows.*.tested_at' => ['nullable', 'date_format:Y-m-d'],
         ]);
 
