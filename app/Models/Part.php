@@ -57,6 +57,7 @@ class Part extends Model
     public function toCatalogArray(): array
     {
         $part = [
+            'pk' => $this->id,
             'id' => $this->item_code ?? '',
             'pn' => $this->part_number ?? '',
             'd' => $this->description,
@@ -70,6 +71,7 @@ class Part extends Model
                 $row->condition ?? '',
                 $row->status ?? '',
                 $row->reference ?? '',
+                $row->id,
             ])->all(),
             'cats' => $this->categories ?? [],
         ];

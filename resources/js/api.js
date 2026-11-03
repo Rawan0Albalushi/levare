@@ -9,6 +9,7 @@ export async function api(url, options = {}) {
     if (!response.ok) {
         const error = new Error(payload.message || 'Request failed');
         error.status = response.status;
+        error.errors = payload.errors || {};
         throw error;
     }
 

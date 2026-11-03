@@ -12,6 +12,9 @@ export function PartsIcon() {
 export function StockIcon() {
     return <Svg><path d="M9 4h6v3H9zM8 5H5v16h14V5h-3M8 12l2 2 4-4M8 17h8" /></Svg>;
 }
+export function EquipmentIcon() {
+    return <Svg><path d="M4 14a8 8 0 0 1 16 0" /><path d="M12 14 16 9" /><path d="M12 14h.01" /><path d="M5 19h14" /></Svg>;
+}
 export function SearchIcon() {
     return <Svg className="ico"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.6-3.6" /></Svg>;
 }

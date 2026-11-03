@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, Route, Routes, useNavigate } from 'react-router-dom';
 import { api } from './api';
 import { prepareCatalog } from './catalog/logic';
 import { CatalogPage } from './catalog/ui';
-import { MenuIcon, PartsIcon, StockIcon } from './icons';
-import { stockText, text } from './i18n';
+import { EquipmentPage } from './equipment/Equipment';
+import { EquipmentIcon, MenuIcon, PartsIcon, StockIcon } from './icons';
+import { equipmentText, stockText, text } from './i18n';
 import { StocktakePage } from './stock/Stocktake';
 
 export default function App() {
@@ -16,6 +17,10 @@ export default function App() {
     const navigate = useNavigate();
     const t = (key) => text[lang][key];
     const s = (key) => stockText[lang][key];
+    const e = (key) => equipmentText[lang][key];
+    const langRef = useRef(lang);
+    const loadedRef = useRef(false);
+    langRef.current = lang;
 
     useEffect(() => {
         document.documentElement.lang = lang;
@@ -27,13 +32,18 @@ export default function App() {
         document.body.classList.toggle('side-on', menu);
     }, [menu]);
 
+    const loadCatalog = useCallback(() => api('/api/catalog')
+        .then((payload) => { loadedRef.current = true; setCatalog(payload); setError(''); })
+        .catch((error) => {
+            if (!loadedRef.current) setError(langRef.current === 'ar' ? 'تعذر تحميل القطع من الخادم.' : 'The parts catalog could not be loaded.');
+            throw error;
+        }), []);
+
     useEffect(() => {
         let active = true;
-        api('/api/catalog')
-            .then((payload) => { if (active) setCatalog(payload); })
-            .catch(() => { if (active) setError(lang === 'ar' ? 'تعذر تحميل القطع من الخادم.' : 'The parts catalog could not be loaded.'); });
+        loadCatalog().catch(() => { if (!active) setError(''); });
         return () => { active = false; };
-    }, []);
+    }, [loadCatalog]);
 
     const prepared = useMemo(() => (catalog ? prepareCatalog(catalog.parts) : null), [catalog]);
     const source = catalog ? [catalog.source?.store, catalog.source?.critical].filter(Boolean).join(' · ') : '';
@@ -50,6 +60,9 @@ export default function App() {
                     </NavLink>
                     <NavLink to="/stock" className={({ isActive }) => (isActive ? 'on' : '')} onClick={() => setMenu(false)}>
                         <StockIcon /><span>{t('navStock')}</span>
+                    </NavLink>
+                    <NavLink to="/equipment" className={({ isActive }) => (isActive ? 'on' : '')} onClick={() => setMenu(false)}>
+                        <EquipmentIcon /><span>{t('navEquipment')}</span>
                     </NavLink>
                 </nav>
                 <div className="sfoot">
@@ -69,8 +82,9 @@ export default function App() {
             {error ? <div className="boot"><strong>Levare</strong><span>{error}</span></div> : null}
             {prepared ? (
                 <Routes>
-                    <Route path="/" element={<CatalogPage parts={prepared.parts} byPn={prepared.byPn} lang={lang} t={t} whyLabels={text[lang].why} onNotice={setNotice} />} />
+                    <Route path="/" element={<CatalogPage parts={prepared.parts} byPn={prepared.byPn} lang={lang} t={t} whyLabels={text[lang].why} onNotice={setNotice} onReload={loadCatalog} />} />
                     <Route path="/stock/*" element={<StocktakePage parts={prepared.parts} lang={lang} t={t} s={s} onNotice={setNotice} />} />
+                    <Route path="/equipment" element={<EquipmentPage lang={lang} e={e} onNotice={setNotice} />} />
                 </Routes>
             ) : null}
             {source ? <p className="wrap src">{t('dataFrom')}: {source}</p> : null}

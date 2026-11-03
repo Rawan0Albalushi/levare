@@ -3,6 +3,7 @@ import { Link, Route, Routes, useNavigate, useParams } from 'react-router-dom';
 import { api } from '../api';
 import { buildLocations, fmtQ, zoneOf } from '../catalog/logic';
 import { Notes } from '../catalog/ui';
+import { ConfirmDialog } from '../Confirm';
 import { BackIcon, ChevronIcon, ClockIcon } from '../icons';
 import { clock, counts, currentShift, dateKey, employeeLabel, finishLocation, fromKey, hours, newId, plan, reopenLocation, shiftStat } from './logic';
 
@@ -208,6 +209,7 @@ function Session({ items, employees, setEmployees, parts, lang, s, t, onSave, on
     const [draft, setDraft] = useState(null);
     const [view, setView] = useState({ tab: 'locs', q: '', st: 'pending', open: null, limit: 120, edit: null });
     const [shiftOpen, setShiftOpen] = useState(false);
+    const [cancelAsk, setCancelAsk] = useState(false);
     const [surplusFor, setSurplusFor] = useState(null);
     const stocktake = draft || source;
 
@@ -263,7 +265,7 @@ function Session({ items, employees, setEmployees, parts, lang, s, t, onSave, on
                     <Link className="btn" to="/stock"><BackIcon />{s('back')}</Link>
                     <button type="button" className="btn" onClick={() => window.print()}>{s('checklist')}</button>
                     <button type="button" className="btn" onClick={() => exportStocktake(stocktake, s)}>{s('export')}</button>
-                    {stocktake.status === 'prog' ? <button type="button" className="btn danger" onClick={() => { if (window.confirm(s('cancelConfirm'))) { const next = structuredClone(stocktake); const active = currentShift(next); if (active) active.end = new Date().toISOString(); next.open = null; next.status = 'cancel'; commit(next); } }}>{s('cancelBtn')}</button> : null}
+                    {stocktake.status === 'prog' ? <button type="button" className="btn danger" onClick={() => setCancelAsk(true)}>{s('cancelBtn')}</button> : null}
                 </div>
             </div>
             {stocktake.status === 'done' ? <div className="notice" style={{ background: 'var(--ok-bg)', borderColor: '#bfe8d4' }}><h3 style={{ color: 'var(--ok)' }}>✓ {s('finished')}</h3><p>{s('finishedOn')}: {stocktake.finished ? new Date(stocktake.finished).toLocaleString(lang === 'ar' ? 'ar-OM' : 'en-GB') : ''}</p></div> : null}
@@ -349,6 +351,24 @@ function Session({ items, employees, setEmployees, parts, lang, s, t, onSave, on
                 commit(next);
                 setShiftOpen(false);
             }} /> : null}
+            {cancelAsk ? (
+                <ConfirmDialog
+                    title={s('cancelTitle')}
+                    message={s('cancelConfirm')}
+                    confirmLabel={s('cancelBtn')}
+                    cancelLabel={s('keep')}
+                    onConfirm={() => {
+                        const next = structuredClone(stocktake);
+                        const active = currentShift(next);
+                        if (active) active.end = new Date().toISOString();
+                        next.open = null;
+                        next.status = 'cancel';
+                        setCancelAsk(false);
+                        commit(next);
+                    }}
+                    onClose={() => setCancelAsk(false)}
+                />
+            ) : null}
             {surplusFor ? <SurplusForm location={surplusFor} parts={parts} s={s} onClose={() => setSurplusFor(null)} onSave={(entry) => {
                 if (requireShift()) return;
                 const next = structuredClone(stocktake);

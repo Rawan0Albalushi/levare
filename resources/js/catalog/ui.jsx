@@ -1,5 +1,8 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import { api } from '../api';
+import { ConfirmDialog } from '../Confirm';
 import { splitNotes, fmtQ, locsOf, mainCode, sumQ, altList, similarParts, searchParts, categoryCounts, catalogStats, uniqDesc, groupsOf, nearCodes, looseMatches } from './logic';
+import { PartForm } from './form';
 import { CategoryGlyph, PartGlyph, PinIcon, SearchIcon, CardsIcon, TableIcon, DownloadIcon, UploadIcon } from '../icons';
 
 export function Notes({ value }) {
@@ -38,7 +41,16 @@ function Locations({ group, max = 3, t }) {
     );
 }
 
-function PartCard({ part, t, lang, onOpen }) {
+function PartActions({ part, t, onEdit, onDelete }) {
+    return (
+        <div className="eq-actions" onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
+            <button type="button" className="btn sm" onClick={() => onEdit(part)}>{t('editPart')}</button>
+            <button type="button" className="btn sm miss" onClick={() => onDelete(part)}>{t('deletePart')}</button>
+        </div>
+    );
+}
+
+function PartCard({ part, t, lang, onOpen, onEdit, onDelete }) {
     const group = part.sib;
     return (
         <div className={`card ${part.q > 0 ? 'in' : 'out'}`} role="button" tabIndex={0} onClick={() => onOpen(part)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onOpen(part); } }}>
@@ -59,12 +71,13 @@ function PartCard({ part, t, lang, onOpen }) {
                     {group.map((item) => (
                         <div className={`pnrow ${item === part ? 'cur' : ''}`} key={item.k} onClick={(event) => { event.stopPropagation(); onOpen(item); }}>
                             <span><b className="mono">{mainCode(item, t('noCode'))}</b>{item.pn && item.id ? <small className="mono"> {t('idShort')} {item.id}</small> : null}</span>
-                            <Qty part={item} outLabel={t('out')} />
+                            <span className="pn-end"><Qty part={item} outLabel={t('out')} /><PartActions part={item} t={t} onEdit={onEdit} onDelete={onDelete} /></span>
                         </div>
                     ))}
                 </div>
             ) : null}
             <Locations group={group} t={t} />
+            {group.length === 1 ? <div className="card-acts"><PartActions part={part} t={t} onEdit={onEdit} onDelete={onDelete} /></div> : null}
         </div>
     );
 }
@@ -83,15 +96,24 @@ function Mini({ part, why, whyLabels, t, onOpen }) {
     );
 }
 
-export function CatalogPage({ parts, byPn, lang, t, whyLabels, onNotice }) {
+export function CatalogPage({ parts, byPn, lang, t, whyLabels, onNotice, onReload }) {
     const [query, setQuery] = useState('');
     const [cat, setCat] = useState('all');
     const [stock, setStock] = useState('all');
     const [view, setView] = useState(() => localStorage.getItem('levare-view') || 'cards');
     const [limit, setLimit] = useState(120);
-    const [open, setOpen] = useState(null);
+    const [openPk, setOpenPk] = useState(null);
+    const [creating, setCreating] = useState(false);
+    const [editing, setEditing] = useState(null);
+    const [pendingDelete, setPendingDelete] = useState(null);
     const [importing, setImporting] = useState(false);
     const fileRef = useRef(null);
+    const formOpenRef = useRef(false);
+    const confirmRef = useRef(false);
+    formOpenRef.current = creating || editing != null;
+    confirmRef.current = pendingDelete != null;
+    const open = useMemo(() => (openPk == null ? null : parts.find((part) => part.pk === openPk) ?? null), [parts, openPk]);
+    const showPart = (part) => setOpenPk(part?.pk ?? null);
     const state = { q: query, cat, stock };
     const list = useMemo(() => searchParts(parts, state), [parts, query, cat, stock]);
     const cards = useMemo(() => uniqDesc(list), [list]);
@@ -103,8 +125,17 @@ export function CatalogPage({ parts, byPn, lang, t, whyLabels, onNotice }) {
 
     useEffect(() => {
         const onKey = (event) => {
-            if (event.key === 'Escape') setOpen(null);
-            if (event.key === '/' && document.activeElement?.id !== 'q') {
+            if (event.key === 'Escape') {
+                if (confirmRef.current) return;
+                if (formOpenRef.current) {
+                    setCreating(false);
+                    setEditing(null);
+                    return;
+                }
+                setOpenPk(null);
+            }
+            const typing = ['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement?.tagName);
+            if (event.key === '/' && !typing) {
                 event.preventDefault();
                 document.getElementById('q')?.focus();
             }
@@ -142,6 +173,32 @@ export function CatalogPage({ parts, byPn, lang, t, whyLabels, onNotice }) {
         const book = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(book, sheet, 'Parts');
         XLSX.writeFile(book, `Levare-parts.xlsx`);
+    }
+
+    function editPart(part) {
+        setCreating(false);
+        setEditing(part);
+    }
+
+    function removePart(part) {
+        if (!part?.pk) return;
+        setPendingDelete(part);
+    }
+
+    async function confirmDelete() {
+        const part = pendingDelete;
+        if (!part?.pk) return;
+        setPendingDelete(null);
+        confirmRef.current = false;
+        try {
+            await api(`/api/parts/${part.pk}`, { method: 'DELETE' });
+            if (openPk === part.pk) setOpenPk(null);
+            if (editing?.pk === part.pk) setEditing(null);
+            await onReload();
+            onNotice(t('deletedPart'));
+        } catch {
+            onNotice(t('savePartErr'));
+        }
     }
 
     return (
@@ -219,22 +276,23 @@ export function CatalogPage({ parts, byPn, lang, t, whyLabels, onNotice }) {
                         <button type="button" className="btn sm" onClick={exportExcel} aria-label={t('exportExcel')}><DownloadIcon /><span>Excel</span></button>
                         <button type="button" className="btn sm" disabled={importing} aria-label={t('importExcel')} onClick={() => fileRef.current?.click()}><UploadIcon /><span>{importing ? t('importing') : 'Excel'}</span></button>
                         <input ref={fileRef} type="file" accept=".xlsx,.xlsb,.xls,.xlsm" multiple hidden onChange={(event) => { const files = event.target.files; event.target.value = ''; if (files?.length) importFiles(files); }} />
+                        <button type="button" className="btn primary" onClick={() => { setEditing(null); setCreating(true); }}>+ {t('addPart')}</button>
                     </div>
                 </div>
             </section>
 
-            <Notice query={query} exact={exact} list={list} parts={parts} byPn={byPn} t={t} lang={lang} whyLabels={whyLabels} onOpen={setOpen} onQuery={setQuery} />
+            <Notice query={query} exact={exact} list={list} parts={parts} byPn={byPn} t={t} lang={lang} whyLabels={whyLabels} onOpen={showPart} onQuery={setQuery} />
 
             {view === 'table' ? (
                 <div className="twrap">
                     <table className="parts">
-                        <thead><tr><th></th><th>{t('partNo')}</th><th>{t('itemCode')}</th><th>{t('description')}</th><th>{t('qty')}</th><th>{t('locations')}</th><th>{t('priority')}</th></tr></thead>
+                        <thead><tr><th></th><th>{t('partNo')}</th><th>{t('itemCode')}</th><th>{t('description')}</th><th>{t('qty')}</th><th>{t('locations')}</th><th>{t('priority')}</th><th></th></tr></thead>
                         <tbody>
                             {groups.map((group) => (
                                 <Fragment key={`${group.cat}-${group.label}`}>
-                                    <tr className="gh"><td colSpan={7}><div className="ghead"><h2>{group.label}</h2>{cat === 'all' ? <span className="k cat-k">{t(group.cat)}</span> : null}<span className="k">{group.n}</span></div></td></tr>
+                                    <tr className="gh"><td colSpan={8}><div className="ghead"><h2>{group.label}</h2>{cat === 'all' ? <span className="k cat-k">{t(group.cat)}</span> : null}<span className="k">{group.n}</span></div></td></tr>
                                     {group.items.map((part) => (
-                                        <tr className={part.q > 0 ? 'in' : 'out'} key={part.k} tabIndex={0} onClick={() => setOpen(part)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setOpen(part); } }}>
+                                        <tr className={part.q > 0 ? 'in' : 'out'} key={part.k} tabIndex={0} onClick={() => showPart(part)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); showPart(part); } }}>
                                             <td><div className="thumb"><PartGlyph part={part} /></div></td>
                                             <td className="mono">{part.sib.map((item) => <div key={item.k}><b>{item.pn || '—'}</b></div>)}</td>
                                             <td className="mono">{part.sib.map((item) => <div key={item.k}>{item.id || '—'}</div>)}</td>
@@ -242,6 +300,7 @@ export function CatalogPage({ parts, byPn, lang, t, whyLabels, onNotice }) {
                                             <td>{part.sib.map((item) => <div className="qline" key={item.k}><Qty part={item} outLabel={t('out')} /></div>)}</td>
                                             <td><Locations group={part.sib} max={4} t={t} /></td>
                                             <td><Badges part={part} t={t} /></td>
+                                            <td>{part.sib.map((item) => <PartActions key={item.k} part={item} t={t} onEdit={editPart} onDelete={removePart} />)}</td>
                                         </tr>
                                     ))}
                                 </Fragment>
@@ -252,11 +311,41 @@ export function CatalogPage({ parts, byPn, lang, t, whyLabels, onNotice }) {
             ) : groups.map((group) => (
                 <section className="group" key={`${group.cat}-${group.label}`}>
                     <div className="ghead"><h2>{group.label}</h2>{cat === 'all' ? <span className="k cat-k">{t(group.cat)}</span> : null}<span className="k">{group.n}</span><span className="ln" /></div>
-                    <div className="grid">{group.items.map((part) => <PartCard key={part.k} part={part} t={t} lang={lang} onOpen={setOpen} />)}</div>
+                    <div className="grid">{group.items.map((part) => <PartCard key={part.k} part={part} t={t} lang={lang} onOpen={showPart} onEdit={editPart} onDelete={removePart} />)}</div>
                 </section>
             ))}
             {cards.length > limit ? <button type="button" className="more-btn" onClick={() => setLimit((value) => value + 120)}>{t('showMore')}</button> : null}
-            {open ? <PartDrawer part={open} parts={parts} byPn={byPn} t={t} whyLabels={whyLabels} onOpen={setOpen} onClose={() => setOpen(null)} /> : null}
+            {open ? <PartDrawer part={open} parts={parts} byPn={byPn} t={t} whyLabels={whyLabels} onOpen={showPart} onClose={() => setOpenPk(null)} onEdit={editPart} onDelete={removePart} /> : null}
+            {(creating || editing) ? (
+                <PartForm
+                    part={editing}
+                    t={t}
+                    onClose={() => { setCreating(false); setEditing(null); }}
+                    onSaved={async (pk) => {
+                        setCreating(false);
+                        setEditing(null);
+                        setOpenPk(pk);
+                        try {
+                            await onReload();
+                            onNotice(t('savedPart'));
+                        } catch {
+                            onNotice(t('savePartErr'));
+                        }
+                    }}
+                    onFail={() => onNotice(t('savePartErr'))}
+                />
+            ) : null}
+            {pendingDelete ? (
+                <ConfirmDialog
+                    title={t('deleteTitle')}
+                    message={t('deleteConfirm')}
+                    detail={mainCode(pendingDelete, t('noCode'))}
+                    confirmLabel={t('deletePart')}
+                    cancelLabel={t('cancel')}
+                    onConfirm={confirmDelete}
+                    onClose={() => { confirmRef.current = false; setPendingDelete(null); }}
+                />
+            ) : null}
         </main>
     );
 }
@@ -296,7 +385,7 @@ function Fact({ label, children }) {
     return <div className="fact"><div className="l">{label}</div><div className="v">{children}</div></div>;
 }
 
-export function PartDrawer({ part, parts, byPn, t, whyLabels, onOpen, onClose }) {
+export function PartDrawer({ part, parts, byPn, t, whyLabels, onOpen, onClose, onEdit, onDelete }) {
     useEffect(() => {
         const previous = document.body.style.overflow;
         document.body.style.overflow = 'hidden';
@@ -313,7 +402,13 @@ export function PartDrawer({ part, parts, byPn, t, whyLabels, onOpen, onClose })
         <>
             <div className="scrim on" onClick={onClose} />
             <aside className="drawer on" role="dialog" aria-modal="true" aria-labelledby="part-title">
-                <div className="dhead"><button type="button" className="x" onClick={onClose} aria-label="close">×</button></div>
+                <div className="dhead">
+                    <div className="dacts">
+                        <button type="button" className="btn sm" onClick={() => onEdit(part)}>{t('editPart')}</button>
+                        <button type="button" className="btn sm miss" onClick={() => onDelete(part)}>{t('deletePart')}</button>
+                    </div>
+                    <button type="button" className="x" onClick={onClose} aria-label={t('close')}>×</button>
+                </div>
                 <div className="dbody">
                     <div className="dhero">
                         <div className="thumb"><PartGlyph part={part} /></div>
