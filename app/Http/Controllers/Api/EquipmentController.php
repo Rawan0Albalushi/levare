@@ -93,7 +93,7 @@ class EquipmentController extends Controller
             'rows.*.tested_at' => ['nullable', 'date_format:Y-m-d'],
         ]);
 
-        return response()->json(['imported' => $import->store($data['rows'])], 201);
+        return response()->json($import->store($data['rows']), 201);
     }
 
     /**

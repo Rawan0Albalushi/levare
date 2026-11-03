@@ -109,6 +109,7 @@ class EquipmentTest extends TestCase
                 $this->payload(),
                 $this->payload([
                     'port_number' => 'P-15',
+                    'serial_number' => 'SN-15',
                     'condition' => 'Needs inspection',
                     'tested_at' => '2026-10-20',
                 ]),
@@ -163,6 +164,37 @@ class EquipmentTest extends TestCase
             'recorded_on' => null,
             'condition' => null,
         ]);
+    }
+
+    public function test_import_skips_equipment_that_was_already_saved(): void
+    {
+        $this->postJson('/api/equipment/import', [
+            'rows' => [
+                $this->payload(['serial_number' => 'SN-1']),
+                $this->payload(['port_number' => 'P-15', 'serial_number' => 'SN-1']),
+                $this->payload(['port_number' => 'P-20', 'serial_number' => null, 'description' => 'Loose lead']),
+            ],
+        ])->assertCreated()
+            ->assertJsonPath('imported', 2)
+            ->assertJsonPath('skipped', 1);
+
+        $this->assertSame(2, Equipment::query()->count());
+
+        $this->postJson('/api/equipment/import', [
+            'rows' => [
+                $this->payload(['serial_number' => 'sn-1', 'location' => 'Rack Z']),
+                $this->payload(['port_number' => 'P-20', 'serial_number' => null, 'description' => 'Loose lead']),
+                $this->payload(['port_number' => 'P-21', 'serial_number' => 'SN-2']),
+                $this->payload(['port_number' => 'P-22', 'serial_number' => null, 'description' => 'Seal kit']),
+            ],
+        ])->assertCreated()
+            ->assertJsonPath('imported', 2)
+            ->assertJsonPath('skipped', 2);
+
+        $this->assertSame(4, Equipment::query()->count());
+        $this->assertSame(1, Equipment::query()->where('serial_number', 'SN-1')->count());
+        $this->assertDatabaseHas('equipment', ['serial_number' => 'SN-1', 'location' => 'Rack A']);
+        $this->assertDatabaseHas('equipment', ['serial_number' => 'SN-2', 'port_number' => 'P-21']);
     }
 
     public function test_sending_to_test_writes_today_once(): void

@@ -160,7 +160,10 @@ export function EquipmentPage({ lang, e, onNotice }) {
             }
             const payload = await api('/api/equipment/import', { method: 'POST', body: JSON.stringify({ rows: parsed.records }) });
             await reload();
-            onNotice(`${e('imported')}: ${payload.imported}`);
+            const skipped = Number(payload.skipped || 0);
+            onNotice(skipped > 0
+                ? `${e('imported')}: ${payload.imported} · ${e('alreadySaved')}: ${skipped}`
+                : `${e('imported')}: ${payload.imported}`);
         } catch {
             onNotice(e('importErr'));
         } finally {
