@@ -22,6 +22,7 @@ Route::post('/equipment/import', [EquipmentController::class, 'import']);
 Route::put('/equipment/{equipment}', [EquipmentController::class, 'update']);
 Route::delete('/equipment/{equipment}', [EquipmentController::class, 'destroy']);
 Route::post('/equipment/{equipment}/test', [EquipmentController::class, 'sendToTest']);
+Route::delete('/equipment/{equipment}/test', [EquipmentController::class, 'returnFromTest']);
 
 Route::get('/stocktakes', [StocktakeController::class, 'index']);
 Route::post('/stocktakes', [StocktakeController::class, 'store']);

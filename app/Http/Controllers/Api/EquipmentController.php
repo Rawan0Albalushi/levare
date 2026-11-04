@@ -71,10 +71,14 @@ class EquipmentController extends Controller
 
     public function sendToTest(Equipment $equipment): JsonResponse
     {
-        if ($equipment->tested_at === null) {
-            $equipment->tested_at = now()->toDateString();
-            $equipment->save();
-        }
+        $equipment->recordTest();
+
+        return response()->json(['equipment' => $equipment->toDocument()]);
+    }
+
+    public function returnFromTest(Equipment $equipment): JsonResponse
+    {
+        $equipment->clearTest();
 
         return response()->json(['equipment' => $equipment->toDocument()]);
     }

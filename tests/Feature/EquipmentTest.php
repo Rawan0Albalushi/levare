@@ -213,6 +213,38 @@ class EquipmentTest extends TestCase
             ->assertJsonPath('equipment.tested_at', '2026-11-03');
     }
 
+    public function test_returning_from_test_clears_the_date_and_allows_another_send(): void
+    {
+        $this->travelTo('2026-11-04 09:00:00');
+        $equipment = Equipment::factory()->tested('2026-11-03')->create([
+            'port_number' => 'P-14',
+        ]);
+
+        $this->deleteJson("/api/equipment/{$equipment->id}/test")
+            ->assertOk()
+            ->assertJsonPath('equipment.port_number', 'P-14')
+            ->assertJsonPath('equipment.tested_at', null);
+
+        $this->assertDatabaseHas('equipment', [
+            'id' => $equipment->id,
+            'port_number' => 'P-14',
+            'tested_at' => null,
+        ]);
+
+        $this->deleteJson("/api/equipment/{$equipment->id}/test")
+            ->assertOk()
+            ->assertJsonPath('equipment.tested_at', null);
+
+        $this->getJson('/api/equipment?tested=no')
+            ->assertOk()
+            ->assertJsonPath('summary.untested', 1)
+            ->assertJsonPath('equipment.0.id', $equipment->id);
+
+        $this->postJson("/api/equipment/{$equipment->id}/test")
+            ->assertOk()
+            ->assertJsonPath('equipment.tested_at', '2026-11-04');
+    }
+
     public function test_update_keeps_the_test_date_and_delete_removes_the_row(): void
     {
         $equipment = Equipment::factory()->tested('2026-01-02')->create([

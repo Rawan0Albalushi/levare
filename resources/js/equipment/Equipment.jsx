@@ -58,6 +58,7 @@ export function EquipmentPage({ lang, e, onNotice }) {
     const [editing, setEditing] = useState(null);
     const [creating, setCreating] = useState(false);
     const [pendingDelete, setPendingDelete] = useState(null);
+    const [pendingReturn, setPendingReturn] = useState(null);
     const query = useMemo(() => toQuery(filters, page), [filters, page]);
 
     const onNoticeRef = useRef(onNotice);
@@ -111,11 +112,30 @@ export function EquipmentPage({ lang, e, onNotice }) {
         setSummary(payload.summary || { total: 0, new: 0, repaired: 0, untested: 0 });
     }
 
+    function remember(equipment) {
+        setEditing((current) => (current?.id === equipment.id ? equipment : current));
+    }
+
     async function sendToTest(item) {
         try {
-            await api(`/api/equipment/${item.id}/test`, { method: 'POST' });
+            const payload = await api(`/api/equipment/${item.id}/test`, { method: 'POST' });
+            remember(payload.equipment);
             await reload();
             onNotice(e('sent'));
+        } catch {
+            onNotice(e('saveErr'));
+        }
+    }
+
+    async function confirmReturn() {
+        const item = pendingReturn;
+        if (!item) return;
+        setPendingReturn(null);
+        try {
+            const payload = await api(`/api/equipment/${item.id}/test`, { method: 'DELETE' });
+            remember(payload.equipment);
+            await reload();
+            onNotice(e('returned'));
         } catch {
             onNotice(e('saveErr'));
         }
@@ -332,7 +352,9 @@ export function EquipmentPage({ lang, e, onNotice }) {
                                     <td className="mono">{item.tested_at || '—'}</td>
                                     <td>
                                         <div className="eq-actions">
-                                            {!item.tested_at ? <button type="button" className="btn sm" onClick={(event) => { event.stopPropagation(); sendToTest(item); }}>{e('sendTest')}</button> : null}
+                                            {!item.tested_at
+                                                ? <button type="button" className="btn sm" onClick={(event) => { event.stopPropagation(); sendToTest(item); }}>{e('sendTest')}</button>
+                                                : <button type="button" className="btn sm" onClick={(event) => { event.stopPropagation(); setPendingReturn(item); }}>{e('returnTest')}</button>}
                                             <button type="button" className="btn sm" onClick={(event) => { event.stopPropagation(); setCreating(false); setEditing(item); }}>{e('edit')}</button>
                                             <button type="button" className="btn sm miss" onClick={(event) => { event.stopPropagation(); remove(item); }}>{e('remove')}</button>
                                         </div>
@@ -358,6 +380,7 @@ export function EquipmentPage({ lang, e, onNotice }) {
                     onSaved={async () => { setCreating(false); setEditing(null); await reload(); }}
                     onFail={() => onNotice(e('saveErr'))}
                     onTest={editing ? () => sendToTest(editing) : null}
+                    onReturn={editing ? () => setPendingReturn(editing) : null}
                 />
             ) : null}
             {pendingDelete ? (
@@ -371,11 +394,22 @@ export function EquipmentPage({ lang, e, onNotice }) {
                     onClose={() => setPendingDelete(null)}
                 />
             ) : null}
+            {pendingReturn ? (
+                <ConfirmDialog
+                    title={e('returnTitle')}
+                    message={e('returnConfirm')}
+                    detail={pendingReturn.port_number || pendingReturn.serial_number}
+                    confirmLabel={e('returnTest')}
+                    cancelLabel={e('cancel')}
+                    onConfirm={confirmReturn}
+                    onClose={() => setPendingReturn(null)}
+                />
+            ) : null}
         </main>
     );
 }
 
-function EquipmentForm({ item, e, onClose, onSaved, onFail, onTest }) {
+function EquipmentForm({ item, e, onClose, onSaved, onFail, onTest, onReturn }) {
     const first = useRef(null);
     const [form, setForm] = useState(() => item ? {
         port_number: item.port_number || '',
@@ -477,7 +511,9 @@ function EquipmentForm({ item, e, onClose, onSaved, onFail, onTest }) {
                     </div>
                     <p className="note">{item?.tested_at ? `${e('testedAt')}: ${item.tested_at}` : e('dateHint')}</p>
                     <div className="mfoot">
-                        {item && !item.tested_at ? <button type="button" className="btn" onClick={onTest}>{e('sendTest')}</button> : <span />}
+                        {item && !item.tested_at ? <button type="button" className="btn" onClick={onTest}>{e('sendTest')}</button> : null}
+                        {item?.tested_at ? <button type="button" className="btn" onClick={onReturn}>{e('returnTest')}</button> : null}
+                        {!item ? <span /> : null}
                         <div style={{ display: 'flex', gap: 8 }}>
                             <button type="button" className="btn" onClick={onClose}>{e('close')}</button>
                             <button type="submit" className="btn primary" disabled={saving}>{e('save')}</button>

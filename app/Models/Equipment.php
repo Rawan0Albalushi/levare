@@ -77,6 +77,26 @@ class Equipment extends Model
         return $query;
     }
 
+    public function recordTest(): void
+    {
+        if ($this->tested_at !== null) {
+            return;
+        }
+
+        $this->tested_at = now()->toDateString();
+        $this->save();
+    }
+
+    public function clearTest(): void
+    {
+        if ($this->tested_at === null) {
+            return;
+        }
+
+        $this->tested_at = null;
+        $this->save();
+    }
+
     /**
      * @return array<string, mixed>
      */

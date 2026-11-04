@@ -128,12 +128,13 @@ export const stockText = {
 
 export const equipmentText = {
     ar: {
-        title: 'المعدات', sub: 'سجل المعدات وحدة وحدة أو من إكسل. زر إرسال للفحص يكتب تاريخ الفحص بنفسه.',
+        title: 'المعدات', sub: 'سجل المعدات وحدة وحدة أو من إكسل. إرسال للفحص يكتب تاريخ الفحص، وتقدر ترجعه بدون فحص.',
         add: 'إضافة معدة', edit: 'تعديل', save: 'حفظ', close: 'إغلاق', cancel: 'إلغاء', remove: 'حذف', removeTitle: 'حذف المعدة',
         removeConfirm: 'متأكد تبي تحذف هالمعدة؟',
         port: 'رقم المنفذ', serial: 'الرقم التسلسلي', description: 'الوصف', well: 'البئر المعيّن',
         date: 'التاريخ', location: 'الموقع', condition: 'الحالة', testedAt: 'تاريخ الفحص',
         new: 'جديد', repaired: 'مصلح', sendTest: 'إرسال للفحص', sent: 'انكتب تاريخ الفحص',
+        returnTest: 'إرجاع بدون فحص', returnTitle: 'إرجاع بدون فحص', returnConfirm: 'ترجع هالمعدة بدون فحص؟ بينمسح تاريخ الفحص.', returned: 'رجعت بدون فحص',
         dateHint: 'تاريخ الفحص ما ينكتب يدوي. ينكتب لما تضغط إرسال للفحص.',
         total: 'الكل', untested: 'بدون فحص', results: 'نتيجة',
         from: 'من', to: 'إلى', testedState: 'حالة الفحص', testedYes: 'تم فحصها', testedNo: 'ما انفحصت',
@@ -151,12 +152,13 @@ export const equipmentText = {
         portErr: 'رقم المنفذ مطلوب', dateErr: 'التاريخ غير واضح', testedErr: 'تاريخ الفحص غير واضح', conditionErr: 'الحالة لازم تكون جديد أو مصلح',
     },
     en: {
-        title: 'Equipment', sub: 'Add equipment one by one or from Excel. Send to test writes the test date.',
+        title: 'Equipment', sub: 'Add equipment one by one or from Excel. Send to test writes the test date, and you can return it without a test.',
         add: 'Add equipment', edit: 'Edit', save: 'Save', close: 'Close', cancel: 'Cancel', remove: 'Delete', removeTitle: 'Delete equipment',
         removeConfirm: 'Delete this equipment?',
         port: 'Port number', serial: 'Serial number', description: 'Description', well: 'Assigned well',
         date: 'Date', location: 'Location', condition: 'Condition', testedAt: 'Date of test',
         new: 'New', repaired: 'Repaired', sendTest: 'Send to test', sent: 'Test date saved',
+        returnTest: 'Return without test', returnTitle: 'Return without test', returnConfirm: 'Return this equipment without a test? The test date will be cleared.', returned: 'Returned without a test',
         dateHint: 'The test date is not typed. It is written when you send the equipment to test.',
         total: 'All', untested: 'Not tested', results: 'results',
         from: 'From', to: 'To', testedState: 'Test', testedYes: 'Tested', testedNo: 'Not tested',
