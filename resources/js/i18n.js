@@ -30,7 +30,7 @@ export const text = {
         addQtyHint: 'الكمية المضافة تنضاف على الكمية الحالية في المخزن، وما تستبدلها.',
         addLocation: 'إضافة موقع', noPriority: 'بدون', priorityHigh: 'عالية', priorityMedium: 'متوسطة', priorityLow: 'منخفضة',
         criticalList: 'ضمن قائمة القطع الحرجة',
-        listUn: 'U/N', listConsumables: 'Consumables', assemblyQty: 'الكمية المطلوبة', assemblyMissing: 'مو موجودة في الكتالوج',
+        listUn: 'U/N', listConsumables: 'Consumables', assemblyMissing: 'مو موجودة في الكتالوج',
     },
     en: {
         navParts: 'Parts', navStock: 'Stocktake', navEquipment: 'Equipment',
@@ -63,7 +63,7 @@ export const text = {
         addQtyHint: 'The quantity you enter is added to the quantity already in the store. It does not replace it.',
         addLocation: 'Add location', noPriority: 'None', priorityHigh: 'High', priorityMedium: 'Medium', priorityLow: 'Low',
         criticalList: 'On the critical parts list',
-        listUn: 'U/N', listConsumables: 'Consumables', assemblyQty: 'Required qty', assemblyMissing: 'Not in the catalog',
+        listUn: 'U/N', listConsumables: 'Consumables', assemblyMissing: 'Not in the catalog',
     },
 };
 

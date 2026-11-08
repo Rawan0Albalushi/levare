@@ -96,6 +96,26 @@ function Mini({ part, why, whyLabels, t, onOpen }) {
     );
 }
 
+function AssemblyLocations({ part, t }) {
+    const totals = new Map();
+    for (const row of part.L || []) {
+        const name = row[0];
+        if (!name) continue;
+        totals.set(name, (totals.get(name) || 0) + (+row[1] || 0));
+    }
+    const rows = [...totals.entries()];
+    if (!rows.length) return <div className="loclist empty"><PinIcon />{t('noLocShort')}</div>;
+    return (
+        <div className="loclist">
+            {rows.map(([name, quantity]) => (
+                <div className={`locrow ${quantity > 0 ? '' : 'zero'}`} key={name}>
+                    <span className="lname"><PinIcon /><span className="mono"><Notes value={name} /></span></span>
+                </div>
+            ))}
+        </div>
+    );
+}
+
 function AssemblyLists({ assembly, parts, t, onOpen }) {
     const byPk = useMemo(() => new Map(parts.map((part) => [part.pk, part])), [parts]);
     const sections = [['un', 'listUn'], ['consumables', 'listConsumables']];
@@ -123,9 +143,7 @@ function AssemblyLists({ assembly, parts, t, onOpen }) {
                                         <th>{t('partNo')}</th>
                                         <th>{t('itemCode')}</th>
                                         <th>{t('description')}</th>
-                                        <th>{t('unit')}</th>
-                                        <th>{t('assemblyQty')}</th>
-                                        <th>{t('qty')}</th>
+                                        <th>{t('location')}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -148,9 +166,7 @@ function AssemblyLists({ assembly, parts, t, onOpen }) {
                                                 <td className="mono"><b>{line.pn || '—'}</b></td>
                                                 <td className="mono">{line.id || '—'}</td>
                                                 <td className="ltr td-d"><Notes value={line.d} /></td>
-                                                <td className="mono">{line.u || '—'}</td>
-                                                <td className="mono">{fmtQ(line.qty)}</td>
-                                                <td>{part ? <Qty part={part} outLabel={t('out')} /> : <span className="qty out">{t('assemblyMissing')}</span>}</td>
+                                                <td>{part ? <AssemblyLocations part={part} t={t} /> : <span className="qty out">{t('assemblyMissing')}</span>}</td>
                                             </tr>
                                         );
                                     })}

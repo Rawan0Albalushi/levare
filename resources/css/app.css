@@ -193,7 +193,7 @@ table.parts .loclist.empty { background: transparent; padding: 0; }
 .assembly-head { margin: 2px 0 22px; }
 .assembly-head h2 { margin: 0; font-size: clamp(26px, 4vw, 34px); color: var(--brand-800); font-weight: 700; text-align: start; }
 .assembly-head p { margin: 6px 0 0; max-width: 72ch; text-align: start; unicode-bidi: isolate; }
-table.parts.assembly { min-width: 880px; }
+table.parts.assembly { min-width: 760px; }
 table.parts.assembly tbody tr.static { cursor: default; }
 table.parts.assembly tbody tr.static:hover td { background: transparent; }
 table.parts.assembly tbody tr:focus-visible td:first-child { box-shadow: inset 3px 0 0 var(--brand); }
