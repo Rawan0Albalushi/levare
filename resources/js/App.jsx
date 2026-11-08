@@ -82,7 +82,7 @@ export default function App() {
             {error ? <div className="boot"><strong>Levare</strong><span>{error}</span></div> : null}
             {prepared ? (
                 <Routes>
-                    <Route path="/" element={<CatalogPage parts={prepared.parts} lang={lang} t={t} whyLabels={text[lang].why} onNotice={setNotice} onReload={loadCatalog} />} />
+                    <Route path="/" element={<CatalogPage parts={prepared.parts} assemblies={catalog.assemblies || []} lang={lang} t={t} whyLabels={text[lang].why} onNotice={setNotice} onReload={loadCatalog} />} />
                     <Route path="/stock/*" element={<StocktakePage parts={prepared.parts} lang={lang} t={t} s={s} onNotice={setNotice} />} />
                     <Route path="/equipment" element={<EquipmentPage lang={lang} e={e} onNotice={setNotice} />} />
                 </Routes>

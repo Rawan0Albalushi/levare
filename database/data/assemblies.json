@@ -1,0 +1,566 @@
+[
+  {
+    "part_number": "10071317",
+    "description": "Motor Seal, ESP B 538 PB136M BSBSL HL MTSC HT",
+    "lines": [
+      {
+        "section": "un",
+        "position": 1,
+        "item_code": "368863",
+        "part_number": "10011674",
+        "description": "Head, motor seal 538 PB136 VT SS",
+        "uom": "ea",
+        "quantity": 1
+      },
+      {
+        "section": "un",
+        "position": 2,
+        "item_code": "438479",
+        "part_number": "10031586",
+        "description": "Shaft, motor seal 538 PB136 3 chamber 35mm INV 16T 9mm groove WN-311",
+        "uom": "ea",
+        "quantity": 1
+      },
+      {
+        "section": "un",
+        "position": 3,
+        "item_code": "320298",
+        "part_number": "10011546",
+        "description": "Housing, motor seal 538 PB136 VT CS FSC",
+        "uom": "ea",
+        "quantity": 3
+      },
+      {
+        "section": "un",
+        "position": 4,
+        "item_code": "320290",
+        "part_number": "10010175",
+        "description": "Retainer, seat mechanical seal 538 PB136 ID 38mm x LG 20mm SS",
+        "uom": "ea",
+        "quantity": 1
+      },
+      {
+        "section": "un",
+        "position": 5,
+        "item_code": "320304",
+        "part_number": "10010593",
+        "description": "Tube, retaining motor seal PB136 CS",
+        "uom": "ea",
+        "quantity": 1
+      },
+      {
+        "section": "un",
+        "position": 6,
+        "item_code": "320303",
+        "part_number": "10011946",
+        "description": "Plate, retaining motor seal PB136 CS",
+        "uom": "ea",
+        "quantity": 1
+      },
+      {
+        "section": "un",
+        "position": 7,
+        "item_code": "460258",
+        "part_number": "10064810",
+        "description": "Body S/A, upper 538 PB136M motor seal w/bushing LG: 144mm CS CPO",
+        "uom": "ea",
+        "quantity": 1
+      },
+      {
+        "section": "un",
+        "position": 8,
+        "item_code": "479582",
+        "part_number": "10068439",
+        "description": "Frame S/A, bag motor seal PB136M CS",
+        "uom": "ea",
+        "quantity": 2
+      },
+      {
+        "section": "un",
+        "position": 9,
+        "item_code": "6603",
+        "part_number": "2011557",
+        "description": "Plate, retaining mechanical seal 538 PB136 motor seal SS",
+        "uom": "ea",
+        "quantity": 2
+      },
+      {
+        "section": "un",
+        "position": 10,
+        "item_code": "437839",
+        "part_number": "10064776",
+        "description": "Body S/A, center labyrinth 538 PB136M motor seal w/bushing CS CPO",
+        "uom": "ea",
+        "quantity": 2
+      },
+      {
+        "section": "un",
+        "position": 11,
+        "item_code": "320275",
+        "part_number": "10010505",
+        "description": "Frame S/A, labyrinth motor seal B 538 PB136 Carbon Steel",
+        "uom": "ea",
+        "quantity": 1
+      },
+      {
+        "section": "un",
+        "position": 12,
+        "item_code": "320272",
+        "part_number": "2036717",
+        "description": "Body S/A, lower motor seal 538 PB136 LG: 114mm CS CPO",
+        "uom": "ea",
+        "quantity": 1
+      },
+      {
+        "section": "un",
+        "position": 13,
+        "item_code": "406294",
+        "part_number": "10023977",
+        "description": "Base S/A, motor seal 538 PB136 35mm VT w/bushing bronze tin foundry SS",
+        "uom": "ea",
+        "quantity": 1
+      },
+      {
+        "section": "un",
+        "position": 14,
+        "item_code": "404989",
+        "part_number": "10009790",
+        "description": "Plug, 8mm carbon steel",
+        "uom": "ea",
+        "quantity": 6
+      },
+      {
+        "section": "un",
+        "position": 15,
+        "item_code": "408725",
+        "part_number": "2011695",
+        "description": "Bearing, upthrust PB102/114/136/172 motor seal Bronze",
+        "uom": "ea",
+        "quantity": 1
+      },
+      {
+        "section": "un",
+        "position": 16,
+        "item_code": "438483",
+        "part_number": "10042578",
+        "description": "Sleeve, retaining motor seal 538 PB136 CS",
+        "uom": "ea",
+        "quantity": 1
+      },
+      {
+        "section": "un",
+        "position": 17,
+        "item_code": "438482",
+        "part_number": "10042577",
+        "description": "Ring, 2-piece motor seal 538 PB136 35mm 31 x 40 x 9 SS",
+        "uom": "ea",
+        "quantity": 1
+      },
+      {
+        "section": "un",
+        "position": 18,
+        "item_code": "438481",
+        "part_number": "10042579",
+        "description": "Runner, thrust motor seal 538 PB136 35mm 110 x 25 SS",
+        "uom": "ea",
+        "quantity": 1
+      },
+      {
+        "section": "un",
+        "position": 19,
+        "item_code": "390260",
+        "part_number": "10028314",
+        "description": "Bearing S/A, thrust lower 538 PB136 OD: 114.3mm THK: 23.8mm",
+        "uom": "ea",
+        "quantity": 1
+      },
+      {
+        "section": "un",
+        "position": 20,
+        "item_code": "6933",
+        "part_number": "2011311",
+        "description": "Sleeve, shaft 35 x 42 x 35 keyway SS",
+        "uom": "ea",
+        "quantity": 5
+      },
+      {
+        "section": "un",
+        "position": 21,
+        "item_code": "475880",
+        "part_number": "10066480",
+        "description": "Screw, shaft setting 3/8-24UNF-2A LG: 16mm WN-311",
+        "uom": "ea",
+        "quantity": 1
+      },
+      {
+        "section": "un",
+        "position": 22,
+        "item_code": "287593",
+        "part_number": "10009338",
+        "description": "Tube S/A, labyrinth motor seal LG: 450mm Carbon Steel",
+        "uom": "ea",
+        "quantity": 1
+      },
+      {
+        "section": "un",
+        "position": 23,
+        "item_code": "437842",
+        "part_number": "10050156",
+        "description": "Tube, 10mm OD 7mm ID 490mm LG Carbon Steel",
+        "uom": "ea",
+        "quantity": 2
+      },
+      {
+        "section": "un",
+        "position": 24,
+        "item_code": "7257",
+        "part_number": "2011565",
+        "description": "Screw, M5 x LG:25mm w/coating GOST 17473",
+        "uom": "ea",
+        "quantity": 2
+      },
+      {
+        "section": "un",
+        "position": 25,
+        "item_code": "164662",
+        "part_number": "2011573",
+        "description": "Screw, round head M5x.8 LG: 12mm SS GOST 17473",
+        "uom": "ea",
+        "quantity": 9
+      },
+      {
+        "section": "un",
+        "position": 26,
+        "item_code": "164663",
+        "part_number": "2011705",
+        "description": "Washer, Lock helical spring 5mm Stainless Steel",
+        "uom": "ea",
+        "quantity": 11
+      },
+      {
+        "section": "un",
+        "position": 27,
+        "item_code": "414280",
+        "part_number": "10010655",
+        "description": "Key, 2.8 x 2.8 LG: 140mm Carbon Steel",
+        "uom": "ea",
+        "quantity": 1
+      },
+      {
+        "section": "un",
+        "position": 28,
+        "item_code": "405581",
+        "part_number": "2011475",
+        "description": "Keystock, square 2.8 x 2.8 x LG: 32mm CS",
+        "uom": "ea",
+        "quantity": 3
+      },
+      {
+        "section": "un",
+        "position": 29,
+        "item_code": "6932",
+        "part_number": "2011479",
+        "description": "Ring, lock motor seal 538 PB136 35mm SS",
+        "uom": "ea",
+        "quantity": 2
+      },
+      {
+        "section": "un",
+        "position": 30,
+        "item_code": "6942",
+        "part_number": "2011389",
+        "description": "Spacer, 35mm x 58mm x 10mm SS",
+        "uom": "ea",
+        "quantity": 2
+      },
+      {
+        "section": "un",
+        "position": 31,
+        "item_code": "6954",
+        "part_number": "2011297",
+        "description": "Shim, shaft setting 35mm THK: 1mm Stainless Steel",
+        "uom": "ea",
+        "quantity": 9
+      },
+      {
+        "section": "un",
+        "position": 32,
+        "item_code": "6956",
+        "part_number": "2011299",
+        "description": "Shim, shaft setting 35mm THK: 0.5mm Stainless Steel",
+        "uom": "ea",
+        "quantity": 2
+      },
+      {
+        "section": "un",
+        "position": 33,
+        "item_code": "320293",
+        "part_number": "10010567",
+        "description": "Cap, shipping motor seal 538 PB136 base CS CPO",
+        "uom": "ea",
+        "quantity": 1
+      },
+      {
+        "section": "un",
+        "position": 34,
+        "item_code": "320291",
+        "part_number": "10010566",
+        "description": "Cap, shipping motor seal 538 PB136 head CS CPO",
+        "uom": "ea",
+        "quantity": 1
+      },
+      {
+        "section": "consumables",
+        "position": 35,
+        "item_code": "6944",
+        "part_number": "2011481",
+        "description": "Ring, retaining external snap 35mm CS",
+        "uom": "ea",
+        "quantity": 14
+      },
+      {
+        "section": "consumables",
+        "position": 36,
+        "item_code": "374190",
+        "part_number": "2031488",
+        "description": "Nameplate, motor seal ESP B SS",
+        "uom": "ea",
+        "quantity": 1
+      },
+      {
+        "section": "consumables",
+        "position": 37,
+        "item_code": "227880",
+        "part_number": "2034980",
+        "description": "Plug, B vent 3/8-24UNF-3A K-500 Monel",
+        "uom": "ea",
+        "quantity": 8
+      },
+      {
+        "section": "consumables",
+        "position": 38,
+        "item_code": "419000",
+        "part_number": "1288600",
+        "description": "Gasket, drain & fill valve 16.0mm lead",
+        "uom": "ea",
+        "quantity": 1
+      },
+      {
+        "section": "consumables",
+        "position": 39,
+        "item_code": "232278",
+        "part_number": "2034990",
+        "description": "Screw, cap double hex 7/16-20UNF-3A LG:1.50in Monel",
+        "uom": "ea",
+        "quantity": 14
+      },
+      {
+        "section": "consumables",
+        "position": 40,
+        "item_code": "240906",
+        "part_number": "798788",
+        "description": "Washer, lock helical spring 7/16 K500 Monel",
+        "uom": "ea",
+        "quantity": 14
+      },
+      {
+        "section": "consumables",
+        "position": 41,
+        "item_code": "525106",
+        "part_number": "20019458",
+        "description": "O-ring, 046-052-36-2-(Aflas-100) GOST 9833/MS-35029",
+        "uom": "ea",
+        "quantity": 4
+      },
+      {
+        "section": "consumables",
+        "position": 42,
+        "item_code": "447013",
+        "part_number": "10048667",
+        "description": "Bolt, hex M10-6g x 55mm CS GOST 7798",
+        "uom": "ea",
+        "quantity": 2
+      },
+      {
+        "section": "consumables",
+        "position": 43,
+        "item_code": "562108",
+        "part_number": "20022689",
+        "description": "Seal, mechanical 35mm LQ SC/SC SS/Monel AFLAS type 2 double",
+        "uom": "ea",
+        "quantity": 1
+      },
+      {
+        "section": "consumables",
+        "position": 44,
+        "item_code": "565234",
+        "part_number": "20022688",
+        "description": "Seal, mechanical 35mm LQ SC/SC SS/Monel AFLAS type 2 single",
+        "uom": "ea",
+        "quantity": 2
+      },
+      {
+        "section": "consumables",
+        "position": 45,
+        "item_code": "525096",
+        "part_number": "20019448",
+        "description": "O-ring, 095-100-25-2-(Aflas-100) GOST 9833/MS-35029",
+        "uom": "ea",
+        "quantity": 1
+      },
+      {
+        "section": "consumables",
+        "position": 46,
+        "item_code": "525084",
+        "part_number": "20019435",
+        "description": "O-ring, 115-121-36-2-(Aflas-100) GOST 9833/MS-35029",
+        "uom": "ea",
+        "quantity": 6
+      },
+      {
+        "section": "consumables",
+        "position": 47,
+        "item_code": "527602",
+        "part_number": "10095222",
+        "description": "O-ring, 125-130-36-2-(Aflas-100) GOST 9833/MS-35029",
+        "uom": "ea",
+        "quantity": 15
+      },
+      {
+        "section": "consumables",
+        "position": 48,
+        "item_code": "525082",
+        "part_number": "20019433",
+        "description": "O-ring, 086-092-36-2-(Aflas-100) GOST 9833/MS-35029",
+        "uom": "ea",
+        "quantity": 2
+      },
+      {
+        "section": "consumables",
+        "position": 49,
+        "item_code": "525107",
+        "part_number": "20019459",
+        "description": "O-ring, 070-076-36-2-(Aflas-100) GOST 9833/MS-35029",
+        "uom": "ea",
+        "quantity": 1
+      },
+      {
+        "section": "consumables",
+        "position": 50,
+        "item_code": "525118",
+        "part_number": "20019472",
+        "description": "Bag, motor seal B 538 PB136 (Aflas-100H) MS-35029",
+        "uom": "ea",
+        "quantity": 2
+      },
+      {
+        "section": "consumables",
+        "position": 51,
+        "item_code": "537851",
+        "part_number": "",
+        "description": "Clamp RX99.5-906 S906 (Dongbo)",
+        "uom": "ea",
+        "quantity": 4
+      },
+      {
+        "section": "consumables",
+        "position": 52,
+        "item_code": "475371",
+        "part_number": "10072687",
+        "description": "Plug, shipping motor seal 538 OD: 50mm LG: 41.5mm plastic",
+        "uom": "ea",
+        "quantity": 1
+      },
+      {
+        "section": "consumables",
+        "position": 53,
+        "item_code": "475885",
+        "part_number": "10066482",
+        "description": "Shim, shaft setting ID:10mm THK: 0.5mm SS",
+        "uom": "ea",
+        "quantity": 2
+      },
+      {
+        "section": "consumables",
+        "position": 54,
+        "item_code": "475886",
+        "part_number": "10066483",
+        "description": "Shim, shaft setting ID:10mm THK: 0.1mm SS",
+        "uom": "ea",
+        "quantity": 2
+      },
+      {
+        "section": "consumables",
+        "position": 55,
+        "item_code": "68083",
+        "part_number": "20005327",
+        "description": "Valve, relief 1/4 MNPT x 1/4 FNPT 5PSI 532T1-2MP-5",
+        "uom": "ea",
+        "quantity": 2
+      },
+      {
+        "section": "consumables",
+        "position": 56,
+        "item_code": "227881",
+        "part_number": "2034983",
+        "description": "Valve assembly, B drain & fill K-500 Monel",
+        "uom": "ea",
+        "quantity": 1
+      },
+      {
+        "section": "consumables",
+        "position": 57,
+        "item_code": "426331",
+        "part_number": "10029643",
+        "description": "Nut, hex M10-6H 12x16.2mm with bevel alloy steel",
+        "uom": "ea",
+        "quantity": 2
+      },
+      {
+        "section": "consumables",
+        "position": 58,
+        "item_code": "117608",
+        "part_number": "1288581",
+        "description": "Gasket, plug M10 x 1.0 Lead",
+        "uom": "ea",
+        "quantity": 8
+      },
+      {
+        "section": "consumables",
+        "position": 59,
+        "item_code": "475884",
+        "part_number": "10066484",
+        "description": "Shim, shaft setting ID:10mm THK: 3.0mm SS",
+        "uom": "ea",
+        "quantity": 2
+      },
+      {
+        "section": "consumables",
+        "position": 60,
+        "item_code": "475881",
+        "part_number": "10066485",
+        "description": "Shim, shaft setting ID:10mm THK: 0.4mm SS",
+        "uom": "ea",
+        "quantity": 2
+      },
+      {
+        "section": "consumables",
+        "position": 61,
+        "item_code": "475882",
+        "part_number": "10066486",
+        "description": "Shim, shaft setting ID:10mm THK: 0.8mm SS",
+        "uom": "ea",
+        "quantity": 2
+      },
+      {
+        "section": "consumables",
+        "position": 62,
+        "item_code": "475883",
+        "part_number": "10066481",
+        "description": "Shim, shaft setting ID:10mm THK: 1.5mm SS",
+        "uom": "ea",
+        "quantity": 2
+      }
+    ]
+  }
+]

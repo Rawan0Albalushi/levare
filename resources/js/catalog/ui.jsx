@@ -96,7 +96,75 @@ function Mini({ part, why, whyLabels, t, onOpen }) {
     );
 }
 
-export function CatalogPage({ parts, lang, t, whyLabels, onNotice, onReload }) {
+function AssemblyLists({ assembly, parts, t, onOpen }) {
+    const byPk = useMemo(() => new Map(parts.map((part) => [part.pk, part])), [parts]);
+    const sections = [['un', 'listUn'], ['consumables', 'listConsumables']];
+
+    return (
+        <>
+            <div className="assembly-head">
+                <h2 className="mono">{assembly.pn}</h2>
+                <p>{assembly.d}</p>
+            </div>
+            {sections.map(([section, label]) => {
+                const lines = assembly.lines.filter((line) => line.section === section);
+                return (
+                    <section className="group" key={section} aria-labelledby={`assembly-${section}`}>
+                        <div className="ghead">
+                            <h2 id={`assembly-${section}`}>{t(label)}</h2>
+                            <span className="k">{lines.length}</span>
+                            <span className="ln" />
+                        </div>
+                        <div className="twrap">
+                            <table className="parts assembly">
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>{t('partNo')}</th>
+                                        <th>{t('itemCode')}</th>
+                                        <th>{t('description')}</th>
+                                        <th>{t('unit')}</th>
+                                        <th>{t('assemblyQty')}</th>
+                                        <th>{t('qty')}</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {lines.map((line) => {
+                                        const part = line.pk == null ? null : byPk.get(line.pk) ?? null;
+                                        const open = () => { if (part) onOpen(part); };
+                                        return (
+                                            <tr
+                                                key={line.n}
+                                                className={part ? (part.q > 0 ? 'in' : 'out') : 'static'}
+                                                tabIndex={part ? 0 : undefined}
+                                                onClick={part ? open : undefined}
+                                                onKeyDown={(event) => {
+                                                    if (!part || (event.key !== 'Enter' && event.key !== ' ')) return;
+                                                    event.preventDefault();
+                                                    open();
+                                                }}
+                                            >
+                                                <td className="mono">{line.n}</td>
+                                                <td className="mono"><b>{line.pn || '—'}</b></td>
+                                                <td className="mono">{line.id || '—'}</td>
+                                                <td className="ltr td-d"><Notes value={line.d} /></td>
+                                                <td className="mono">{line.u || '—'}</td>
+                                                <td className="mono">{fmtQ(line.qty)}</td>
+                                                <td>{part ? <Qty part={part} outLabel={t('out')} /> : <span className="qty out">{t('assemblyMissing')}</span>}</td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                );
+            })}
+        </>
+    );
+}
+
+export function CatalogPage({ parts, assemblies = [], lang, t, whyLabels, onNotice, onReload }) {
     const [query, setQuery] = useState('');
     const [cat, setCat] = useState('all');
     const [stock, setStock] = useState('all');
@@ -121,6 +189,11 @@ export function CatalogPage({ parts, lang, t, whyLabels, onNotice, onReload }) {
     const stats = useMemo(() => catalogStats(parts), [parts]);
     const groups = useMemo(() => groupsOf(cards, limit), [cards, limit]);
     const exact = query.trim() && parts.find((part) => part.id.toLowerCase() === query.trim().toLowerCase() || part.pn.toLowerCase() === query.trim().toLowerCase());
+    const assembly = useMemo(() => {
+        const needle = query.trim().toLowerCase();
+        if (!needle) return null;
+        return assemblies.find((item) => String(item.pn).toLowerCase() === needle) ?? null;
+    }, [assemblies, query]);
     const stockShare = stats.items ? Math.round((stats.inStock / stats.items) * 100) : 0;
 
     useEffect(() => {
@@ -213,6 +286,7 @@ export function CatalogPage({ parts, lang, t, whyLabels, onNotice, onReload }) {
                 </div>
             </section>
 
+            {assembly ? <AssemblyLists assembly={assembly} parts={parts} t={t} onOpen={showPart} /> : <>
             <section className="deck" aria-label={t('deckLabel')}>
                 <div className="stats">
                     {[
@@ -315,6 +389,7 @@ export function CatalogPage({ parts, lang, t, whyLabels, onNotice, onReload }) {
                 </section>
             ))}
             {cards.length > limit ? <button type="button" className="more-btn" onClick={() => setLimit((value) => value + 120)}>{t('showMore')}</button> : null}
+            </>}
             {open ? <PartDrawer part={open} t={t} whyLabels={whyLabels} onOpen={showPart} onClose={() => setOpenPk(null)} onEdit={editPart} onDelete={removePart} /> : null}
             {(creating || editing) ? (
                 <PartForm

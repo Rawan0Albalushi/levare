@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Actions\ImportParts;
 use App\Http\Controllers\Controller;
+use App\Models\Assembly;
 use App\Models\CatalogSource;
 use App\Models\Part;
 use Illuminate\Http\JsonResponse;
@@ -20,9 +21,7 @@ class CatalogController extends Controller
         $parts = Part::query()
             ->with('locations')
             ->orderBy('sort_order')
-            ->get()
-            ->map(fn (Part $part): array => $part->toCatalogArray())
-            ->values();
+            ->get();
 
         return response()->json([
             'source' => [
@@ -30,7 +29,8 @@ class CatalogController extends Controller
                 'critical' => $source?->critical_name,
                 'imported_at' => $source?->imported_at?->toIso8601String(),
             ],
-            'parts' => $parts,
+            'parts' => $parts->map(fn (Part $part): array => $part->toCatalogArray())->values(),
+            'assemblies' => Assembly::catalogDocuments($parts),
         ]);
     }
 
