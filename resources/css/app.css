@@ -76,8 +76,11 @@ table.parts tr.gh td { background: var(--bg); padding: 14px 12px 8px; border-top
 table.parts tr.gh .ghead { margin: 0; }
 table.parts .thumb { width: 36px; height: 36px; border-radius: 10px; background: var(--bg); border-color: var(--line); }
 table.parts .thumb svg { width: 24px; height: 24px; }
-table.parts .loclist { background: transparent; padding: 0; border-radius: 0; gap: 2px; }
-table.parts .locrow .lname { font-size: 13px; }
+table.parts .loclist { width: max-content; max-width: 320px; background: transparent; padding: 0; border-radius: 0; gap: 2px; }
+table.parts .locrow { justify-content: flex-start; gap: 8px; }
+table.parts .locrow .lname { flex: 0 1 auto; font-size: 13px; }
+table.parts .locrow .lq { flex: none; }
+table.parts td:nth-child(7) { white-space: nowrap; }
 table.parts .loclist.empty { background: transparent; padding: 0; }
 .td-d { direction: ltr; text-align: left; min-width: 240px; line-height: 1.45; }
 
