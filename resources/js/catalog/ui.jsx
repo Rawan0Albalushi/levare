@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../api';
 import { ConfirmDialog } from '../Confirm';
-import { splitNotes, fmtQ, locsOf, mainCode, sumQ, altList, similarParts, searchParts, categoryCounts, catalogStats, uniqDesc, groupsOf, nearCodes, looseMatches } from './logic';
+import { splitNotes, fmtQ, locsOf, mainCode, sumQ, altList, searchParts, categoryCounts, catalogStats, uniqDesc, groupsOf, nearCodes, looseMatches } from './logic';
 import { PartForm } from './form';
 import { CategoryGlyph, PartGlyph, PinIcon, SearchIcon, CardsIcon, TableIcon, DownloadIcon, UploadIcon } from '../icons';
 
@@ -96,7 +96,7 @@ function Mini({ part, why, whyLabels, t, onOpen }) {
     );
 }
 
-export function CatalogPage({ parts, byPn, lang, t, whyLabels, onNotice, onReload }) {
+export function CatalogPage({ parts, lang, t, whyLabels, onNotice, onReload }) {
     const [query, setQuery] = useState('');
     const [cat, setCat] = useState('all');
     const [stock, setStock] = useState('all');
@@ -281,7 +281,7 @@ export function CatalogPage({ parts, byPn, lang, t, whyLabels, onNotice, onReloa
                 </div>
             </section>
 
-            <Notice query={query} exact={exact} list={list} parts={parts} byPn={byPn} t={t} lang={lang} whyLabels={whyLabels} onOpen={showPart} onQuery={setQuery} />
+            <Notice query={query} exact={exact} list={list} parts={parts} t={t} lang={lang} whyLabels={whyLabels} onOpen={showPart} onQuery={setQuery} />
 
             {view === 'table' ? (
                 <div className="twrap">
@@ -315,7 +315,7 @@ export function CatalogPage({ parts, byPn, lang, t, whyLabels, onNotice, onReloa
                 </section>
             ))}
             {cards.length > limit ? <button type="button" className="more-btn" onClick={() => setLimit((value) => value + 120)}>{t('showMore')}</button> : null}
-            {open ? <PartDrawer part={open} parts={parts} byPn={byPn} t={t} whyLabels={whyLabels} onOpen={showPart} onClose={() => setOpenPk(null)} onEdit={editPart} onDelete={removePart} /> : null}
+            {open ? <PartDrawer part={open} t={t} whyLabels={whyLabels} onOpen={showPart} onClose={() => setOpenPk(null)} onEdit={editPart} onDelete={removePart} /> : null}
             {(creating || editing) ? (
                 <PartForm
                     part={editing}
@@ -350,16 +350,14 @@ export function CatalogPage({ parts, byPn, lang, t, whyLabels, onNotice, onReloa
     );
 }
 
-function Notice({ query, exact, list, parts, byPn, t, lang, whyLabels, onOpen, onQuery }) {
+function Notice({ query, exact, list, parts, t, lang, whyLabels, onOpen, onQuery }) {
     const q = query.trim();
     if (exact && exact.q <= 0) {
-        let alts = altList(exact, parts, byPn);
-        const same = alts.length && alts[0].why[0] === 'sameDesc';
-        if (same) alts = alts.filter((item) => item.why[0] !== 'near');
+        const alts = altList(exact);
         return (
             <div className="notice out">
                 <h3>{lang === 'ar' ? `القطعة ${q} نفدت من المخزن` : `${q} is out of stock`}</h3>
-                <p>{same ? t('sameDescText') : alts.length ? t('outText') : t('noAlt')}</p>
+                <p>{alts.length ? t('sameDescText') : t('noAlt')}</p>
                 {alts.length ? <div className="mini" style={{ marginTop: 12 }}>{alts.map((item) => <Mini key={item.q.k} part={item.q} why={item.why} whyLabels={whyLabels} t={t} onOpen={onOpen} />)}</div> : null}
             </div>
         );
@@ -385,14 +383,13 @@ function Fact({ label, children }) {
     return <div className="fact"><div className="l">{label}</div><div className="v">{children}</div></div>;
 }
 
-export function PartDrawer({ part, parts, byPn, t, whyLabels, onOpen, onClose, onEdit, onDelete }) {
+export function PartDrawer({ part, t, whyLabels, onOpen, onClose, onEdit, onDelete }) {
     useEffect(() => {
         const previous = document.body.style.overflow;
         document.body.style.overflow = 'hidden';
         return () => { document.body.style.overflow = previous; };
     }, []);
-    const alts = altList(part, parts, byPn);
-    const similar = similarParts(part, alts);
+    const alts = altList(part);
     const group = part.sib;
     const many = group.length > 1;
     const rows = group.flatMap((item) => item.L.map((location) => [item, location]));
@@ -472,7 +469,6 @@ export function PartDrawer({ part, parts, byPn, t, whyLabels, onOpen, onClose, o
                         <div className="sec">{t('alternatives')} <span className="k">{alts.length}</span></div>
                         {alts.length ? <div className="mini">{alts.map((item) => <Mini key={item.q.k} part={item.q} why={item.why} whyLabels={whyLabels} t={t} onOpen={onOpen} />)}</div> : <p style={{ color: 'var(--muted)' }}>{t('noAlt')}</p>}
                     </div>
-                    {similar.length ? <><div className="sec">{t('similar')} <span className="k">{part.famLabel}</span></div><div className="mini">{similar.map((item) => <Mini key={item.k} part={item} whyLabels={whyLabels} t={t} onOpen={onOpen} />)}</div></> : null}
                 </div>
             </aside>
         </>

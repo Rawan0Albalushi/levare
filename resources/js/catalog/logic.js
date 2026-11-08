@@ -37,26 +37,17 @@ function prepare(part, index) {
     next.cat = next.cats[0] || 'other';
     next.dk = String(next.d || '').replace(/\s+/g, ' ').trim();
     const head = next.dl.split(',')[0].replace(/\bs\/a\b/g, '').trim();
-    const rest = (next.dl.split(',')[1] || '').trim();
-    const sub = (rest.match(/^[a-z][a-z \-]*?(?=\s*\d|\s*$|\s(?:s\/a|for|with|w\/)\b)/) || [''])[0].split(' ').slice(0, 2).join(' ');
-    next.ty = head.split(' ')[0];
     next.series = (String(next.d || '').match(SERIES) || [''])[0];
-    next.sub = sub;
     next.fam = [head, next.series].join('|');
     next.famLabel = cap(head) + (next.series ? ' · ' + next.series : '');
-    next.tok = new Set(next.dl.match(/[a-z]+-?\d+|\d+(?:\.\d+)?(?:mm|m)?|[a-z]{3,}/g) || []);
-    next.dims = (next.dl.match(/\d+(?:\.\d+)?\s*mm|\d+(?:\.\d+)?\s*x\s*\d+(?:\.\d+)?(?:\s*x\s*\d+(?:\.\d+)?)?/g) || []).map((item) => item.replace(/\s/g, ''));
     next.hay = [next.id, next.pn, next.dl, next.L.map((row) => row[0] + ' ' + (row[5] || '')).join(' '), next.us, next.t, next.no, next.an].join(' ').toLowerCase();
     return next;
 }
 
 export function prepareCatalog(raw) {
     const parts = raw.map(prepare);
-    const families = new Map();
     const byDescription = new Map();
     for (const part of parts) {
-        if (!families.has(part.fam)) families.set(part.fam, []);
-        families.get(part.fam).push(part);
         if (!byDescription.has(part.dk)) byDescription.set(part.dk, []);
         byDescription.get(part.dk).push(part);
     }
@@ -64,9 +55,7 @@ export function prepareCatalog(raw) {
         group.sort((a, b) => b.q - a.q);
         for (const part of group) part.sib = group;
     }
-    for (const part of parts) part.family = families.get(part.fam) || [part];
-    const byPn = new Map(parts.filter((part) => part.pn).map((part) => [part.pn, part]));
-    return { parts, byPn };
+    return { parts };
 }
 
 export const inCat = (part, category) => category === 'all'
@@ -159,51 +148,8 @@ export function locsOf(group) {
     return [...merged.values()].sort((a, b) => (b.q > 0) - (a.q > 0) || b.q - a.q);
 }
 
-function score(a, b) {
-    if (a === b || a.ty !== b.ty) return 0;
-    let value = 5;
-    const why = ['type'];
-    if (a.sub === b.sub) value += 4;
-    if (a.series && a.series === b.series) {
-        value += 5;
-        why.push('series');
-    } else if (a.series && b.series) value -= 4;
-    if (a.cat === b.cat) value += 1;
-    let shared = 0;
-    for (const token of a.tok) if (b.tok.has(token)) shared += 1;
-    value += (shared / (a.tok.size + b.tok.size - shared || 1)) * 10;
-    const dimensions = a.dims.filter((item) => b.dims.includes(item)).length;
-    if (dimensions) {
-        value += 3 * dimensions;
-        why.push('dims');
-    }
-    return { s: value, why };
-}
-
-function rank(part, parts, inStockOnly, limit) {
-    const out = [];
-    for (const candidate of parts) {
-        if (inStockOnly && candidate.q <= 0) continue;
-        const result = score(part, candidate);
-        if (result && result.s >= 9) out.push({ q: candidate, s: result.s + (candidate.q > 0 ? 1 : 0), why: result.why });
-    }
-    return out.sort((a, b) => b.s - a.s).slice(0, limit);
-}
-
-export function altList(part, parts, byPn) {
-    const same = part.sib.filter((item) => item !== part && item.q > 0).map((item) => ({ q: item, why: ['sameDesc'] }));
-    const approved = (part.alt || []).map((pn) => byPn.get(pn)).filter(Boolean).filter((item) => !part.sib.includes(item)).map((item) => ({ q: item, why: ['approved'] }));
-    const auto = rank(part, parts, true, 6)
-        .filter((item) => !part.sib.includes(item.q) && !approved.some((entry) => entry.q === item.q))
-        .map((item) => ({ ...item, why: ['near', ...item.why.filter((reason) => reason !== 'type')] }));
-    return [...same, ...approved, ...auto].slice(0, 8);
-}
-
-export function similarParts(part, excluded) {
-    const closeness = (candidate) => (score(part, candidate) || { s: 0 }).s;
-    return (part.family || []).filter((item) => !part.sib.includes(item) && !excluded.some((entry) => entry.q === item))
-        .sort((a, b) => closeness(b) - closeness(a) || b.q - a.q)
-        .slice(0, 8);
+export function altList(part) {
+    return (part.sib || []).filter((item) => item !== part && item.q > 0).map((item) => ({ q: item, why: ['sameDesc'] }));
 }
 
 function lev(a, b) {
