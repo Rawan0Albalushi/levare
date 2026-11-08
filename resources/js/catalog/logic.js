@@ -70,7 +70,7 @@ function matches(part, words) {
     return words.every((word) => part.hay.includes(word) || (CAT_WORD[word] && inCat(part, CAT_WORD[word])));
 }
 
-const stockOk = (part, stock) => stock === 'all' || (stock === 'in' ? part.q > 0 : part.q <= 0);
+export const stockOk = (part, stock) => stock === 'all' || (stock === 'in' ? part.q > 0 : part.q <= 0);
 const order = (a, b) => (CAT_ORDER[a.cat] - CAT_ORDER[b.cat]) || a.fam.localeCompare(b.fam) || String(a.id || a.pn).localeCompare(String(b.id || b.pn), 'en', { numeric: true });
 
 export function searchParts(parts, state) {

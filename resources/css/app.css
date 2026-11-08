@@ -193,11 +193,10 @@ table.parts .loclist.empty { background: transparent; padding: 0; }
 .assembly-head { margin: 2px 0 22px; }
 .assembly-head h2 { margin: 0; font-size: clamp(26px, 4vw, 34px); color: var(--brand-800); font-weight: 700; text-align: start; }
 .assembly-head p { margin: 6px 0 0; max-width: 72ch; text-align: start; unicode-bidi: isolate; }
-table.parts.assembly { min-width: 760px; }
-table.parts.assembly tbody tr.static { cursor: default; }
-table.parts.assembly tbody tr.static:hover td { background: transparent; }
-table.parts.assembly tbody tr:focus-visible td:first-child { box-shadow: inset 3px 0 0 var(--brand); }
-[dir=rtl] table.parts.assembly tbody tr:focus-visible td:first-child { box-shadow: inset -3px 0 0 var(--brand); }
+table.parts tbody tr.static { cursor: default; }
+table.parts tbody tr.static:hover td { background: transparent; }
+.card.static { cursor: default; }
+.card.static:hover { box-shadow: none; }
 .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
 .card { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; gap: 10px; cursor: pointer; text-align: start; transition: border-color .12s, box-shadow .12s; }
 .grid .card { min-height: 100%; border-width: 1.5px; }

@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../api';
 import { ConfirmDialog } from '../Confirm';
-import { splitNotes, fmtQ, locsOf, mainCode, sumQ, altList, searchParts, categoryCounts, catalogStats, uniqDesc, groupsOf, nearCodes, looseMatches } from './logic';
+import { splitNotes, fmtQ, locsOf, mainCode, sumQ, altList, searchParts, categoryCounts, catalogStats, uniqDesc, groupsOf, nearCodes, looseMatches, inCat, stockOk } from './logic';
 import { PartForm } from './form';
 import { CategoryGlyph, PartGlyph, PinIcon, SearchIcon, CardsIcon, TableIcon, DownloadIcon, UploadIcon } from '../icons';
 
@@ -96,82 +96,117 @@ function Mini({ part, why, whyLabels, t, onOpen }) {
     );
 }
 
-function AssemblyLocations({ part, t }) {
-    const totals = new Map();
-    for (const row of part.L || []) {
-        const name = row[0];
-        if (!name) continue;
-        totals.set(name, (totals.get(name) || 0) + (+row[1] || 0));
-    }
-    const rows = [...totals.entries()];
-    if (!rows.length) return <div className="loclist empty"><PinIcon />{t('noLocShort')}</div>;
+function CatalogPartRow({ part, t, onOpen, onEdit, onDelete }) {
     return (
-        <div className="loclist">
-            {rows.map(([name, quantity]) => (
-                <div className={`locrow ${quantity > 0 ? '' : 'zero'}`} key={name}>
-                    <span className="lname"><PinIcon /><span className="mono"><Notes value={name} /></span></span>
+        <tr className={part.q > 0 ? 'in' : 'out'} tabIndex={0} onClick={() => onOpen(part)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onOpen(part); } }}>
+            <td><div className="thumb"><PartGlyph part={part} /></div></td>
+            <td className="mono">{part.sib.map((item) => <div key={item.k}><b>{item.pn || '—'}</b></div>)}</td>
+            <td className="mono">{part.sib.map((item) => <div key={item.k}>{item.id || '—'}</div>)}</td>
+            <td className="ltr td-d"><Notes value={part.d} /></td>
+            <td>{part.sib.map((item) => <div className="qline" key={item.k}><Qty part={item} outLabel={t('out')} /></div>)}</td>
+            <td><Locations group={part.sib} max={4} t={t} /></td>
+            <td><Badges part={part} t={t} /></td>
+            <td>{part.sib.map((item) => <PartActions key={item.k} part={item} t={t} onEdit={onEdit} onDelete={onDelete} />)}</td>
+        </tr>
+    );
+}
+
+function assemblyEntryVisible(entry, category, stock) {
+    if (!entry.part) {
+        if (category !== 'all' && category !== 'other') return false;
+        return stock !== 'in';
+    }
+    return inCat(entry.part, category) && stockOk(entry.part, stock);
+}
+
+function assemblyCategoryCounts(entries, stock) {
+    const counts = { all: 0, crit: 0, pump: 0, seal: 0, motor: 0, shaft: 0, other: 0 };
+    for (const entry of entries) {
+        if (entry.part) {
+            if (!stockOk(entry.part, stock)) continue;
+            counts.all += 1;
+            if (entry.part.cats.length) {
+                counts.crit += 1;
+                for (const category of entry.part.cats) if (counts[category] != null) counts[category] += 1;
+            } else {
+                counts.other += 1;
+            }
+        } else if (stock !== 'in') {
+            counts.all += 1;
+            counts.other += 1;
+        }
+    }
+    return counts;
+}
+
+function MissingPartCard({ line, t }) {
+    return (
+        <div className="card out static">
+            <div className="row1">
+                <div className="thumb"><PartGlyph part={{ dl: String(line.d || '').toLowerCase() }} /></div>
+                <div className="ids">
+                    <div className="lbl">{t(line.pn ? 'partNo' : 'itemCode')}</div>
+                    <div className="id mono">{line.pn || line.id || t('noCode')}</div>
+                    {line.pn && line.id ? <div className="pn">{t('itemCode')}: <span className="mono">{line.id}</span></div> : null}
                 </div>
-            ))}
+                <span className="qty out">{t('assemblyMissing')}</span>
+            </div>
+            <div className="desc"><Notes value={line.d} /></div>
         </div>
     );
 }
 
-function AssemblyLists({ assembly, parts, t, onOpen }) {
-    const byPk = useMemo(() => new Map(parts.map((part) => [part.pk, part])), [parts]);
-    const sections = [['un', 'listUn'], ['consumables', 'listConsumables']];
+function MissingPartRow({ line, t }) {
+    return (
+        <tr className="out static">
+            <td><div className="thumb"><PartGlyph part={{ dl: String(line.d || '').toLowerCase() }} /></div></td>
+            <td className="mono"><b>{line.pn || '—'}</b></td>
+            <td className="mono">{line.id || '—'}</td>
+            <td className="ltr td-d"><Notes value={line.d} /></td>
+            <td><span className="qty out">{t('assemblyMissing')}</span></td>
+            <td><div className="loclist empty"><PinIcon />{t('noLocShort')}</div></td>
+            <td>—</td>
+            <td></td>
+        </tr>
+    );
+}
 
+function AssemblyLists({ assembly, entries, view, lang, t, onOpen, onEdit, onDelete }) {
+    const sections = [['un', 'listUn'], ['consumables', 'listConsumables']];
     return (
         <>
             <div className="assembly-head">
                 <h2 className="mono">{assembly.pn}</h2>
                 <p>{assembly.d}</p>
             </div>
-            {sections.map(([section, label]) => {
-                const lines = assembly.lines.filter((line) => line.section === section);
+            {view === 'table' ? (
+                <div className="twrap">
+                    <table className="parts">
+                        <thead><tr><th></th><th>{t('partNo')}</th><th>{t('itemCode')}</th><th>{t('description')}</th><th>{t('qty')}</th><th>{t('locations')}</th><th>{t('priority')}</th><th></th></tr></thead>
+                        <tbody>
+                            {sections.map(([section, label]) => {
+                                const lines = entries.filter((entry) => entry.line.section === section);
+                                return (
+                                    <Fragment key={section}>
+                                        <tr className="gh"><td colSpan={8}><div className="ghead"><h2>{t(label)}</h2><span className="k">{lines.length}</span></div></td></tr>
+                                        {lines.map((entry) => (entry.part
+                                            ? <CatalogPartRow key={entry.line.n} part={entry.part} t={t} onOpen={onOpen} onEdit={onEdit} onDelete={onDelete} />
+                                            : <MissingPartRow key={entry.line.n} line={entry.line} t={t} />))}
+                                    </Fragment>
+                                );
+                            })}
+                        </tbody>
+                    </table>
+                </div>
+            ) : sections.map(([section, label]) => {
+                const lines = entries.filter((entry) => entry.line.section === section);
                 return (
                     <section className="group" key={section} aria-labelledby={`assembly-${section}`}>
-                        <div className="ghead">
-                            <h2 id={`assembly-${section}`}>{t(label)}</h2>
-                            <span className="k">{lines.length}</span>
-                            <span className="ln" />
-                        </div>
-                        <div className="twrap">
-                            <table className="parts assembly">
-                                <thead>
-                                    <tr>
-                                        <th>#</th>
-                                        <th>{t('partNo')}</th>
-                                        <th>{t('itemCode')}</th>
-                                        <th>{t('description')}</th>
-                                        <th>{t('location')}</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {lines.map((line) => {
-                                        const part = line.pk == null ? null : byPk.get(line.pk) ?? null;
-                                        const open = () => { if (part) onOpen(part); };
-                                        return (
-                                            <tr
-                                                key={line.n}
-                                                className={part ? (part.q > 0 ? 'in' : 'out') : 'static'}
-                                                tabIndex={part ? 0 : undefined}
-                                                onClick={part ? open : undefined}
-                                                onKeyDown={(event) => {
-                                                    if (!part || (event.key !== 'Enter' && event.key !== ' ')) return;
-                                                    event.preventDefault();
-                                                    open();
-                                                }}
-                                            >
-                                                <td className="mono">{line.n}</td>
-                                                <td className="mono"><b>{line.pn || '—'}</b></td>
-                                                <td className="mono">{line.id || '—'}</td>
-                                                <td className="ltr td-d"><Notes value={line.d} /></td>
-                                                <td>{part ? <AssemblyLocations part={part} t={t} /> : <span className="qty out">{t('assemblyMissing')}</span>}</td>
-                                            </tr>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
+                        <div className="ghead"><h2 id={`assembly-${section}`}>{t(label)}</h2><span className="k">{lines.length}</span><span className="ln" /></div>
+                        <div className="grid">
+                            {lines.map((entry) => (entry.part
+                                ? <PartCard key={entry.line.n} part={entry.part} t={t} lang={lang} onOpen={onOpen} onEdit={onEdit} onDelete={onDelete} />
+                                : <MissingPartCard key={entry.line.n} line={entry.line} t={t} />))}
                         </div>
                     </section>
                 );
@@ -201,7 +236,6 @@ export function CatalogPage({ parts, assemblies = [], lang, t, whyLabels, onNoti
     const state = { q: query, cat, stock };
     const list = useMemo(() => searchParts(parts, state), [parts, query, cat, stock]);
     const cards = useMemo(() => uniqDesc(list), [list]);
-    const counts = useMemo(() => categoryCounts(parts, state), [parts, query, stock]);
     const stats = useMemo(() => catalogStats(parts), [parts]);
     const groups = useMemo(() => groupsOf(cards, limit), [cards, limit]);
     const exact = query.trim() && parts.find((part) => part.id.toLowerCase() === query.trim().toLowerCase() || part.pn.toLowerCase() === query.trim().toLowerCase());
@@ -210,6 +244,22 @@ export function CatalogPage({ parts, assemblies = [], lang, t, whyLabels, onNoti
         if (!needle) return null;
         return assemblies.find((item) => String(item.pn).toLowerCase() === needle) ?? null;
     }, [assemblies, query]);
+    const assemblyEntries = useMemo(() => {
+        if (!assembly) return [];
+        const byPk = new Map(parts.map((part) => [part.pk, part]));
+        return assembly.lines.map((line) => ({
+            line,
+            part: line.pk == null ? null : byPk.get(line.pk) ?? null,
+        }));
+    }, [assembly, parts]);
+    const visibleAssembly = useMemo(
+        () => assemblyEntries.filter((entry) => assemblyEntryVisible(entry, cat, stock)),
+        [assemblyEntries, cat, stock],
+    );
+    const counts = useMemo(
+        () => (assembly ? assemblyCategoryCounts(assemblyEntries, stock) : categoryCounts(parts, state)),
+        [assembly, assemblyEntries, parts, query, stock],
+    );
     const stockShare = stats.items ? Math.round((stats.inStock / stats.items) * 100) : 0;
 
     useEffect(() => {
@@ -252,7 +302,10 @@ export function CatalogPage({ parts, assemblies = [], lang, t, whyLabels, onNoti
     async function exportExcel() {
         const XLSX = await import('xlsx');
         const rows = [['Item Code', 'Part Number', 'Description', 'UOM', 'Location', 'Quantity', 'Condition', 'Last Update', 'Status', 'Reference', 'Type', 'Section', 'Priority']];
-        for (const part of list) {
+        const exported = assembly
+            ? visibleAssembly.map((entry) => entry.part).filter(Boolean)
+            : list;
+        for (const part of exported) {
             const base = [part.id, part.pn, part.d, part.u];
             const tail = [part.t || '', (part.cats || []).join(' / '), part.pr || ''];
             if (!part.L.length) rows.push([...base, '', '', '', '', '', '', ...tail]);
@@ -302,7 +355,6 @@ export function CatalogPage({ parts, assemblies = [], lang, t, whyLabels, onNoti
                 </div>
             </section>
 
-            {assembly ? <AssemblyLists assembly={assembly} parts={parts} t={t} onOpen={showPart} /> : <>
             <section className="deck" aria-label={t('deckLabel')}>
                 <div className="stats">
                     {[
@@ -347,7 +399,7 @@ export function CatalogPage({ parts, assemblies = [], lang, t, whyLabels, onNoti
                 </nav>
 
                 <div className="toolbar">
-                    <div className="count"><b className="mono">{list.length.toLocaleString('en-US')}</b> <span>{t('results')}</span></div>
+                    <div className="count"><b className="mono">{(assembly ? visibleAssembly.length : list.length).toLocaleString('en-US')}</b> <span>{t('results')}</span></div>
                     <div className="tools">
                         <div className="seg stock" role="group" aria-label={t('stockState')}>
                             {[['all', 'stockAll'], ['in', 'stockIn'], ['out', 'stockOut']].map(([key, label]) => (
@@ -371,6 +423,7 @@ export function CatalogPage({ parts, assemblies = [], lang, t, whyLabels, onNoti
                 </div>
             </section>
 
+            {assembly ? <AssemblyLists assembly={assembly} entries={visibleAssembly} view={view} lang={lang} t={t} onOpen={showPart} onEdit={editPart} onDelete={removePart} /> : <>
             <Notice query={query} exact={exact} list={list} parts={parts} t={t} lang={lang} whyLabels={whyLabels} onOpen={showPart} onQuery={setQuery} />
 
             {view === 'table' ? (
@@ -381,18 +434,7 @@ export function CatalogPage({ parts, assemblies = [], lang, t, whyLabels, onNoti
                             {groups.map((group) => (
                                 <Fragment key={`${group.cat}-${group.label}`}>
                                     <tr className="gh"><td colSpan={8}><div className="ghead"><h2>{group.label}</h2>{cat === 'all' ? <span className="k cat-k">{t(group.cat)}</span> : null}<span className="k">{group.n}</span></div></td></tr>
-                                    {group.items.map((part) => (
-                                        <tr className={part.q > 0 ? 'in' : 'out'} key={part.k} tabIndex={0} onClick={() => showPart(part)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); showPart(part); } }}>
-                                            <td><div className="thumb"><PartGlyph part={part} /></div></td>
-                                            <td className="mono">{part.sib.map((item) => <div key={item.k}><b>{item.pn || '—'}</b></div>)}</td>
-                                            <td className="mono">{part.sib.map((item) => <div key={item.k}>{item.id || '—'}</div>)}</td>
-                                            <td className="ltr td-d"><Notes value={part.d} /></td>
-                                            <td>{part.sib.map((item) => <div className="qline" key={item.k}><Qty part={item} outLabel={t('out')} /></div>)}</td>
-                                            <td><Locations group={part.sib} max={4} t={t} /></td>
-                                            <td><Badges part={part} t={t} /></td>
-                                            <td>{part.sib.map((item) => <PartActions key={item.k} part={item} t={t} onEdit={editPart} onDelete={removePart} />)}</td>
-                                        </tr>
-                                    ))}
+                                    {group.items.map((part) => <CatalogPartRow key={part.k} part={part} t={t} onOpen={showPart} onEdit={editPart} onDelete={removePart} />)}
                                 </Fragment>
                             ))}
                         </tbody>
