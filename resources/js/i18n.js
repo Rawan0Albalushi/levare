@@ -31,6 +31,11 @@ export const text = {
         addLocation: 'إضافة موقع', noPriority: 'بدون', priorityHigh: 'عالية', priorityMedium: 'متوسطة', priorityLow: 'منخفضة',
         criticalList: 'ضمن قائمة القطع الحرجة',
         listUn: 'U/N', listConsumables: 'Consumables', assemblyMissing: 'مو موجودة في الكتالوج',
+        issuePart: 'خصم', issueTitle: 'خصم الكمية المطلوبة', issueConfirm: 'سيتم خصم الكمية المطلوبة من المخزون، وتسجيل الحركة.',
+        issueBlocked: 'بعض القطع المحددة كميتها أقل من المطلوب. أزل تحديدها ثم أكّد الخصم.',
+        issueOnHand: 'المتوفر', issueSelected: 'خصم المحدد', issueHistory: 'السجل', issueEmpty: 'ما في حركات خصم لهذه التجميعة.',
+        issueLoading: 'جاري تحميل السجل…', issued: 'تم خصم الكمية وتسجيل الحركة', issueErr: 'ما قدرنا نخصم الكمية. حدّث الصفحة وحاول مرة ثانية.',
+        issueSelect: 'تحديد للخصم', issueSelectSection: 'تحديد القسم',
     },
     en: {
         navParts: 'Parts', navStock: 'Stocktake', navEquipment: 'Equipment',
@@ -64,6 +69,11 @@ export const text = {
         addLocation: 'Add location', noPriority: 'None', priorityHigh: 'High', priorityMedium: 'Medium', priorityLow: 'Low',
         criticalList: 'On the critical parts list',
         listUn: 'U/N', listConsumables: 'Consumables', assemblyMissing: 'Not in the catalog',
+        issuePart: 'Deduct', issueTitle: 'Deduct the required quantity', issueConfirm: 'The required quantity will be deducted from stock and recorded.',
+        issueBlocked: 'Some selected parts do not have enough stock. Clear those rows, then confirm.',
+        issueOnHand: 'On hand', issueSelected: 'Deduct selected', issueHistory: 'History', issueEmpty: 'No deductions recorded for this assembly.',
+        issueLoading: 'Loading history…', issued: 'Quantity deducted and recorded', issueErr: 'The quantity could not be deducted. Refresh the page and try again.',
+        issueSelect: 'Select for deduction', issueSelectSection: 'Select section',
     },
 };
 

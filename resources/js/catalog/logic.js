@@ -224,3 +224,50 @@ export function buildLocations(parts) {
 export const zoneOf = (location) => (String(location).trim().match(/^[A-Za-z]+\d?/) || ['#'])[0].toUpperCase();
 export const sumQ = (group) => group.reduce((sum, part) => sum + part.q, 0);
 export const mainCode = (part, fallback) => part.pn || part.id || fallback;
+
+function roundQty(value) {
+    return Math.round(Number(value) * 100) / 100;
+}
+
+export function issuePlans(entries) {
+    const left = new Map();
+
+    return [...entries].sort((a, b) => a.line.n - b.line.n).map((entry) => {
+        const rows = entry.part?.L || [];
+        const keyFor = (row) => row[7] || `${entry.part?.pk}:${row[0]}`;
+        for (const row of rows) {
+            const key = keyFor(row);
+            if (!left.has(key)) left.set(key, Number(row[1]) || 0);
+        }
+        const need = roundQty(entry.line.qty);
+        let have = 0;
+        for (const row of rows) have += Math.max(left.get(keyFor(row)) || 0, 0);
+        have = roundQty(have);
+        let remaining = need;
+        const draft = new Map(left);
+        const plan = [];
+        for (const row of rows) {
+            const key = keyFor(row);
+            const available = draft.get(key) || 0;
+            if (available <= 0 || remaining <= 0) continue;
+            const take = roundQty(Math.min(available, remaining));
+            plan.push({ loc: row[0], qty: take });
+            draft.set(key, roundQty(available - take));
+            remaining = roundQty(remaining - take);
+        }
+        if (remaining <= 0) {
+            for (const [key, value] of draft) left.set(key, value);
+        }
+        return {
+            n: entry.line.n,
+            pn: entry.line.pn,
+            id: entry.line.id,
+            d: entry.line.d,
+            u: entry.line.u || entry.part?.u || '',
+            qty: need,
+            have,
+            plan,
+            short: remaining > 0,
+        };
+    });
+}

@@ -1,9 +1,10 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../api';
 import { ConfirmDialog } from '../Confirm';
-import { splitNotes, fmtQ, locsOf, mainCode, sumQ, altList, searchParts, categoryCounts, catalogStats, uniqDesc, groupsOf, nearCodes, looseMatches, inCat, stockOk } from './logic';
+import { splitNotes, fmtQ, locsOf, mainCode, sumQ, altList, searchParts, categoryCounts, catalogStats, uniqDesc, groupsOf, nearCodes, looseMatches, inCat, stockOk, issuePlans } from './logic';
 import { PartForm } from './form';
-import { CategoryGlyph, PartGlyph, PinIcon, SearchIcon, CardsIcon, TableIcon, DownloadIcon, UploadIcon, EditIcon, TrashIcon, IconButton } from '../icons';
+import { IssueDialog, IssueHistory } from './issue';
+import { CategoryGlyph, PartGlyph, PinIcon, SearchIcon, CardsIcon, TableIcon, DownloadIcon, UploadIcon, EditIcon, TrashIcon, IssueIcon, IconButton } from '../icons';
 
 export function Notes({ value }) {
     const { main, notes } = splitNotes(value);
@@ -41,16 +42,22 @@ function Locations({ group, max = 3, t }) {
     );
 }
 
-function PartActions({ part, t, onEdit, onDelete }) {
+function PartActions({ part, t, onEdit, onDelete, onIssue }) {
     return (
         <div className="eq-actions" onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
+            {onIssue ? <IconButton label={t('issuePart')} onClick={onIssue}><IssueIcon /></IconButton> : null}
             <IconButton label={t('editPart')} onClick={() => onEdit(part)}><EditIcon /></IconButton>
             <IconButton className="miss" label={t('deletePart')} onClick={() => onDelete(part)}><TrashIcon /></IconButton>
         </div>
     );
 }
 
-function PartCard({ part, t, lang, onOpen, onEdit, onDelete }) {
+function issueFor(part, line, onIssue) {
+    if (!onIssue || !line || part.pk !== line.pk || !(Number(line.qty) > 0)) return undefined;
+    return () => onIssue(line);
+}
+
+function PartCard({ part, line, t, lang, onOpen, onEdit, onDelete, onIssue }) {
     const group = part.sib;
     return (
         <div className={`card ${part.q > 0 ? 'in' : 'out'}`} role="button" tabIndex={0} onClick={() => onOpen(part)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onOpen(part); } }}>
@@ -71,13 +78,13 @@ function PartCard({ part, t, lang, onOpen, onEdit, onDelete }) {
                     {group.map((item) => (
                         <div className={`pnrow ${item === part ? 'cur' : ''}`} key={item.k} onClick={(event) => { event.stopPropagation(); onOpen(item); }}>
                             <span><b className="mono">{mainCode(item, t('noCode'))}</b>{item.pn && item.id ? <small className="mono"> {t('idShort')} {item.id}</small> : null}</span>
-                            <span className="pn-end"><Qty part={item} outLabel={t('out')} /><PartActions part={item} t={t} onEdit={onEdit} onDelete={onDelete} /></span>
+                            <span className="pn-end"><Qty part={item} outLabel={t('out')} /><PartActions part={item} t={t} onEdit={onEdit} onDelete={onDelete} onIssue={issueFor(item, line, onIssue)} /></span>
                         </div>
                     ))}
                 </div>
             ) : null}
             <Locations group={group} t={t} />
-            {group.length === 1 ? <div className="card-acts"><PartActions part={part} t={t} onEdit={onEdit} onDelete={onDelete} /></div> : null}
+            {group.length === 1 ? <div className="card-acts"><PartActions part={part} t={t} onEdit={onEdit} onDelete={onDelete} onIssue={issueFor(part, line, onIssue)} /></div> : null}
         </div>
     );
 }
@@ -100,9 +107,14 @@ function RequiredQty({ line }) {
     return <span className="req mono">{fmtQ(line.qty)}{line.u ? ` ${line.u}` : ''}</span>;
 }
 
-function CatalogPartRow({ part, line, t, onOpen, onEdit, onDelete }) {
+function CatalogPartRow({ part, line, selected, onToggle, t, onOpen, onEdit, onDelete, onIssue }) {
     return (
-        <tr className={part.q > 0 ? 'in' : 'out'} tabIndex={0} onClick={() => onOpen(part)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onOpen(part); } }}>
+        <tr className={part.q > 0 ? 'in' : 'out'} tabIndex={0} onClick={() => onOpen(part)} onKeyDown={(event) => { if (event.target !== event.currentTarget) return; if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onOpen(part); } }}>
+            {line ? (
+                <td className="pick" onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
+                    {canIssue({ part, line }) ? <input type="checkbox" checked={selected} aria-label={t('issueSelect')} onChange={() => onToggle(line.n)} /> : null}
+                </td>
+            ) : null}
             <td><div className="thumb"><PartGlyph part={part} /></div></td>
             <td className="mono">{part.sib.map((item) => <div key={item.k}><b>{item.pn || '—'}</b></div>)}</td>
             <td className="mono">{part.sib.map((item) => <div key={item.k}>{item.id || '—'}</div>)}</td>
@@ -111,7 +123,7 @@ function CatalogPartRow({ part, line, t, onOpen, onEdit, onDelete }) {
             {line ? <td><RequiredQty line={line} /></td> : null}
             <td><Locations group={part.sib} max={4} t={t} /></td>
             <td className="priority"><Badges part={part} t={t} /></td>
-            <td className="col-actions">{part.sib.map((item) => <PartActions key={item.k} part={item} t={t} onEdit={onEdit} onDelete={onDelete} />)}</td>
+            <td className="col-actions">{part.sib.map((item) => <PartActions key={item.k} part={item} t={t} onEdit={onEdit} onDelete={onDelete} onIssue={issueFor(item, line, onIssue)} />)}</td>
         </tr>
     );
 }
@@ -161,9 +173,24 @@ function MissingPartCard({ line, t }) {
     );
 }
 
+function canIssue(entry) {
+    return Boolean(entry.part && entry.line?.pk != null && Number(entry.line.qty) > 0);
+}
+
+function SectionPick({ lines, selected, label, onToggle }) {
+    const ids = lines.filter(canIssue).map((entry) => entry.line.n);
+    const ref = useRef(null);
+    const checked = ids.length > 0 && ids.every((id) => selected.includes(id));
+    const partial = ids.some((id) => selected.includes(id)) && !checked;
+    useEffect(() => { if (ref.current) ref.current.indeterminate = partial; }, [partial]);
+    if (!ids.length) return null;
+    return <input ref={ref} type="checkbox" checked={checked} aria-label={label} onChange={() => onToggle(lines)} onClick={(event) => event.stopPropagation()} />;
+}
+
 function MissingPartRow({ line, t }) {
     return (
         <tr className="out static">
+            <td className="pick"></td>
             <td><div className="thumb"><PartGlyph part={{ dl: String(line.d || '').toLowerCase() }} /></div></td>
             <td className="mono"><b>{line.pn || '—'}</b></td>
             <td className="mono">{line.id || '—'}</td>
@@ -177,26 +204,88 @@ function MissingPartRow({ line, t }) {
     );
 }
 
-function AssemblyLists({ assembly, entries, view, lang, t, onOpen, onEdit, onDelete }) {
+function AssemblyLists({ assembly, entries, view, lang, t, onOpen, onEdit, onDelete, onReload, onNotice }) {
     const sections = [['un', 'listUn'], ['consumables', 'listConsumables']];
+    const [selected, setSelected] = useState([]);
+    const [pending, setPending] = useState(null);
+    const [saving, setSaving] = useState(false);
+    const [history, setHistory] = useState(false);
+    const [historyRev, setHistoryRev] = useState(0);
+
+    useEffect(() => {
+        setSelected([]);
+        setPending(null);
+        setHistory(false);
+    }, [assembly.pn]);
+
+    function toggle(position) {
+        setSelected((current) => (current.includes(position) ? current.filter((item) => item !== position) : [...current, position]));
+    }
+
+    function toggleSection(lines) {
+        const ids = lines.filter(canIssue).map((entry) => entry.line.n);
+        setSelected((current) => {
+            const allOn = ids.length > 0 && ids.every((id) => current.includes(id));
+            return allOn ? current.filter((id) => !ids.includes(id)) : [...new Set([...current, ...ids])];
+        });
+    }
+
+    function ask(lines) {
+        const chosen = (Array.isArray(lines) ? lines : [lines]).filter(Boolean);
+        if (!chosen.length) return;
+        setPending(issuePlans(chosen));
+    }
+
+    const chosen = entries.filter((entry) => selected.includes(entry.line.n) && canIssue(entry));
+
+    async function confirmIssue() {
+        if (!pending || pending.some((line) => line.short) || saving) return;
+        setSaving(true);
+        try {
+            await api(`/api/assemblies/${encodeURIComponent(assembly.pn)}/issues`, {
+                method: 'POST',
+                body: JSON.stringify({ positions: pending.map((line) => line.n) }),
+            });
+            setPending(null);
+            setSelected([]);
+            setHistoryRev((value) => value + 1);
+            await onReload();
+            onNotice(t('issued'));
+        } catch {
+            onNotice(t('issueErr'));
+        } finally {
+            setSaving(false);
+        }
+    }
+
     return (
         <>
             <div className="assembly-head">
-                <h2 className="mono">{assembly.pn}</h2>
-                <p>{assembly.d}</p>
+                <div>
+                    <h2 className="mono">{assembly.pn}</h2>
+                    <p>{assembly.d}</p>
+                </div>
+                <button type="button" className="btn sm" onClick={() => setHistory(true)}>{t('issueHistory')}</button>
             </div>
+            {chosen.length ? (
+                <div className="issue-bar">
+                    <span>{t('issueSelected')} <b className="mono">{chosen.length}</b></span>
+                    <button type="button" className="btn primary sm" onClick={() => ask(chosen)}>{t('issuePart')}</button>
+                    <button type="button" className="btn sm" onClick={() => setSelected([])}>{t('cancel')}</button>
+                </div>
+            ) : null}
             {view === 'table' ? (
                 <div className="twrap">
                     <table className="parts">
-                        <thead><tr><th></th><th>{t('partNo')}</th><th>{t('itemCode')}</th><th>{t('description')}</th><th>{t('qty')}</th><th>{t('requiredQty')}</th><th>{t('locations')}</th><th>{t('priority')}</th><th className="col-actions">{t('actions')}</th></tr></thead>
+                        <thead><tr><th className="pick"></th><th></th><th>{t('partNo')}</th><th>{t('itemCode')}</th><th>{t('description')}</th><th>{t('qty')}</th><th>{t('requiredQty')}</th><th>{t('locations')}</th><th>{t('priority')}</th><th className="col-actions">{t('actions')}</th></tr></thead>
                         <tbody>
                             {sections.map(([section, label]) => {
                                 const lines = entries.filter((entry) => entry.line.section === section);
                                 return (
                                     <Fragment key={section}>
-                                        <tr className="gh"><td colSpan={9}><div className="ghead"><h2>{t(label)}</h2><span className="k">{lines.length}</span></div></td></tr>
+                                        <tr className="gh"><td colSpan={10}><div className="ghead"><SectionPick lines={lines} selected={selected} label={t('issueSelectSection')} onToggle={toggleSection} /><h2>{t(label)}</h2><span className="k">{lines.length}</span></div></td></tr>
                                         {lines.map((entry) => (entry.part
-                                            ? <CatalogPartRow key={entry.line.n} part={entry.part} line={entry.line} t={t} onOpen={onOpen} onEdit={onEdit} onDelete={onDelete} />
+                                            ? <CatalogPartRow key={entry.line.n} part={entry.part} line={entry.line} selected={selected.includes(entry.line.n)} onToggle={toggle} t={t} onOpen={onOpen} onEdit={onEdit} onDelete={onDelete} onIssue={(line) => ask(entries.find((item) => item.line.n === line.n))} />
                                             : <MissingPartRow key={entry.line.n} line={entry.line} t={t} />))}
                                     </Fragment>
                                 );
@@ -208,15 +297,17 @@ function AssemblyLists({ assembly, entries, view, lang, t, onOpen, onEdit, onDel
                 const lines = entries.filter((entry) => entry.line.section === section);
                 return (
                     <section className="group" key={section} aria-labelledby={`assembly-${section}`}>
-                        <div className="ghead"><h2 id={`assembly-${section}`}>{t(label)}</h2><span className="k">{lines.length}</span><span className="ln" /></div>
+                        <div className="ghead"><SectionPick lines={lines} selected={selected} label={t('issueSelectSection')} onToggle={toggleSection} /><h2 id={`assembly-${section}`}>{t(label)}</h2><span className="k">{lines.length}</span><span className="ln" /></div>
                         <div className="grid">
                             {lines.map((entry) => (entry.part
-                                ? <PartCard key={entry.line.n} part={entry.part} t={t} lang={lang} onOpen={onOpen} onEdit={onEdit} onDelete={onDelete} />
+                                ? <PartCard key={entry.line.n} part={entry.part} line={entry.line} t={t} lang={lang} onOpen={onOpen} onEdit={onEdit} onDelete={onDelete} onIssue={(line) => ask(entries.find((item) => item.line.n === line.n))} />
                                 : <MissingPartCard key={entry.line.n} line={entry.line} t={t} />))}
                         </div>
                     </section>
                 );
             })}
+            {pending ? <IssueDialog lines={pending} saving={saving} t={t} onConfirm={confirmIssue} onClose={() => { if (!saving) setPending(null); }} /> : null}
+            {history ? <IssueHistory assembly={assembly} revision={historyRev} t={t} onClose={() => setHistory(false)} /> : null}
         </>
     );
 }
@@ -429,7 +520,7 @@ export function CatalogPage({ parts, assemblies = [], lang, t, whyLabels, onNoti
                 </div>
             </section>
 
-            {assembly ? <AssemblyLists assembly={assembly} entries={visibleAssembly} view={view} lang={lang} t={t} onOpen={showPart} onEdit={editPart} onDelete={removePart} /> : <>
+            {assembly ? <AssemblyLists assembly={assembly} entries={visibleAssembly} view={view} lang={lang} t={t} onOpen={showPart} onEdit={editPart} onDelete={removePart} onReload={onReload} onNotice={onNotice} /> : <>
             <Notice query={query} exact={exact} list={list} parts={parts} t={t} lang={lang} whyLabels={whyLabels} onOpen={showPart} onQuery={setQuery} />
 
             {view === 'table' ? (

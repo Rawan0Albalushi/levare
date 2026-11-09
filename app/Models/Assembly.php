@@ -10,6 +10,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable(['part_number', 'description'])]
 class Assembly extends Model
 {
+    public function getRouteKeyName(): string
+    {
+        return 'part_number';
+    }
+
     public function lines(): HasMany
     {
         return $this->hasMany(AssemblyLine::class)->orderBy('position');

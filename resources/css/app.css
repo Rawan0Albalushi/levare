@@ -194,9 +194,21 @@ table.parts .loclist.empty { background: transparent; padding: 0; }
 .ghead h2 { margin: 0; font-size: 15px; font-weight: 700; color: var(--brand-800); direction: ltr; unicode-bidi: isolate; }
 .ghead .k { font-size: 12px; color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 99px; padding: 2px 8px; line-height: 1.4; }
 .ghead .ln { flex: 1; height: 1px; background: var(--line); }
-.assembly-head { margin: 2px 0 22px; }
+.assembly-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin: 2px 0 22px; }
 .assembly-head h2 { margin: 0; font-size: clamp(26px, 4vw, 34px); color: var(--brand-800); font-weight: 700; text-align: start; }
 .assembly-head p { margin: 6px 0 0; max-width: 72ch; text-align: start; unicode-bidi: isolate; }
+.issue-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: -8px 0 16px; }
+.issue-bar span { color: var(--muted); font-weight: 600; }
+.pick { width: 36px; text-align: center; }
+.pick input, .ghead input { width: 16px; height: 16px; accent-color: var(--brand); }
+.issue-confirm { width: min(520px, 100%); }
+.issue-list { list-style: none; margin: 14px 0 0; padding: 0; }
+.issue-list li { display: grid; gap: 2px; padding: 8px 0; border-top: 1px solid var(--line); }
+.issue-list li.short { color: var(--out); }
+.issue-history { width: min(640px, 100%); }
+.issue-history .assembly-pn { margin: -8px 0 12px; color: var(--muted); }
+.issue-log { display: grid; gap: 16px; }
+.issue-log time { color: var(--muted); font-size: 13px; }
 table.parts tbody tr.static { cursor: default; }
 table.parts tbody tr.static:hover td { background: transparent; }
 .card.static { cursor: default; }

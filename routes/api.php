@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\AssemblyIssueController;
 use App\Http\Controllers\Api\CatalogController;
 use App\Http\Controllers\Api\EmployeeController;
 use App\Http\Controllers\Api\EquipmentController;
@@ -7,6 +8,8 @@ use App\Http\Controllers\Api\PartController;
 use App\Http\Controllers\Api\StocktakeController;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/assemblies/{assembly}/issues', [AssemblyIssueController::class, 'index']);
+Route::post('/assemblies/{assembly}/issues', [AssemblyIssueController::class, 'store']);
 Route::get('/catalog', [CatalogController::class, 'show']);
 Route::post('/catalog/import', [CatalogController::class, 'import']);
 Route::post('/parts', [PartController::class, 'store']);
