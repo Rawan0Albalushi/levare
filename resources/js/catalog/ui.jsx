@@ -276,7 +276,19 @@ function AssemblyLists({ assembly, entries, view, lang, t, onOpen, onEdit, onDel
             ) : null}
             {view === 'table' ? (
                 <div className="twrap">
-                    <table className="parts">
+                    <table className="parts sheet">
+                        <colgroup>
+                            <col className="c-pick" />
+                            <col className="c-thumb" />
+                            <col className="c-pn" />
+                            <col className="c-id" />
+                            <col className="c-desc" />
+                            <col className="c-qty" />
+                            <col className="c-req" />
+                            <col className="c-loc" />
+                            <col className="c-pri" />
+                            <col className="c-act" />
+                        </colgroup>
                         <thead><tr><th className="pick"></th><th></th><th>{t('partNo')}</th><th>{t('itemCode')}</th><th>{t('description')}</th><th>{t('qty')}</th><th>{t('requiredQty')}</th><th>{t('locations')}</th><th>{t('priority')}</th><th className="col-actions">{t('actions')}</th></tr></thead>
                         <tbody>
                             {sections.map(([section, label]) => {
@@ -525,7 +537,17 @@ export function CatalogPage({ parts, assemblies = [], lang, t, whyLabels, onNoti
 
             {view === 'table' ? (
                 <div className="twrap">
-                    <table className="parts">
+                    <table className="parts sheet">
+                        <colgroup>
+                            <col className="c-thumb" />
+                            <col className="c-pn" />
+                            <col className="c-id" />
+                            <col className="c-desc" />
+                            <col className="c-qty" />
+                            <col className="c-loc" />
+                            <col className="c-pri" />
+                            <col className="c-act" />
+                        </colgroup>
                         <thead><tr><th></th><th>{t('partNo')}</th><th>{t('itemCode')}</th><th>{t('description')}</th><th>{t('qty')}</th><th>{t('locations')}</th><th>{t('priority')}</th><th className="col-actions">{t('actions')}</th></tr></thead>
                         <tbody>
                             {groups.map((group) => (

@@ -84,6 +84,31 @@ table.parts td.priority { white-space: nowrap; }
 .req { direction: ltr; font-weight: 700; white-space: nowrap; color: var(--ink); }
 table.parts .loclist.empty { background: transparent; padding: 0; }
 .td-d { direction: ltr; text-align: left; min-width: 240px; line-height: 1.45; }
+@media (min-width: 1280px) {
+  #catalog.wrap { max-width: none; }
+  table.parts.sheet { table-layout: fixed; width: 100%; }
+  table.parts.sheet col.c-pick { width: 36px; }
+  table.parts.sheet col.c-thumb { width: 46px; }
+  table.parts.sheet col.c-pn { width: 112px; }
+  table.parts.sheet col.c-id { width: 104px; }
+  table.parts.sheet col.c-qty { width: 96px; }
+  table.parts.sheet col.c-req { width: 108px; }
+  table.parts.sheet col.c-loc { width: 16%; }
+  table.parts.sheet col.c-pri { width: 84px; }
+  table.parts.sheet col.c-act { width: 124px; }
+  table.parts.sheet th,
+  table.parts.sheet td { min-width: 0; padding-inline: 8px; }
+  table.parts.sheet th { white-space: normal; line-height: 1.25; vertical-align: bottom; }
+  table.parts.sheet .td-d { min-width: 0; overflow-wrap: break-word; }
+  table.parts.sheet .loclist { width: auto; max-width: 100%; }
+  table.parts.sheet .locrow { align-items: flex-start; min-width: 0; }
+  table.parts.sheet .locrow .lname { min-width: 0; }
+  table.parts.sheet .locrow .lname .mono { overflow-wrap: anywhere; }
+  table.parts.sheet td.priority { white-space: normal; }
+  table.parts.sheet th.col-actions,
+  table.parts.sheet td.col-actions { width: auto; padding-inline: 6px; }
+  table.parts.sheet .icon-btn { width: 32px; height: 32px; }
+}
 
 /* hero */
 .hero { padding: 36px 0 8px; text-align: center; }
