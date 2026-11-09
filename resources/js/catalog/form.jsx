@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../api';
+import { IconButton, TrashIcon } from '../icons';
 
 const CATEGORIES = ['pump', 'seal', 'motor', 'shaft'];
 
@@ -221,7 +222,7 @@ export function PartForm({ part, t, onClose, onSaved, onFail }) {
                                         <Field label={index === 0 ? t('cond') : ''}>
                                             <input value={row.condition} aria-label={t('cond')} onChange={(event) => setLocation(index, 'condition', event.target.value)} />
                                         </Field>
-                                        <button type="button" className="btn sm miss loc-remove" onClick={() => setForm((current) => ({ ...current, locations: current.locations.filter((_, rowIndex) => rowIndex !== index) }))}>{t('deletePart')}</button>
+                                        <IconButton className="miss loc-remove" label={t('deletePart')} onClick={() => setForm((current) => ({ ...current, locations: current.locations.filter((_, rowIndex) => rowIndex !== index) }))}><TrashIcon /></IconButton>
                                         {row.id && added !== null ? <p className="qty-after">{t('qtyAfter')}: <b className="mono">{fmtQty(row.current + added)}</b></p> : null}
                                     </div>
                                 );

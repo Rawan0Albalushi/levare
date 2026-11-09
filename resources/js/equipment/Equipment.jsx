@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { api } from '../api';
 import { ConfirmDialog } from '../Confirm';
-import { DownloadIcon, UploadIcon } from '../icons';
+import { DownloadIcon, UploadIcon, EditIcon, TrashIcon, TestIcon, ReturnIcon, IconButton } from '../icons';
 import { dateKey } from '../stock/logic';
 import { EQUIPMENT_COLUMNS, rowsFromSheet } from './excel';
 
@@ -336,7 +336,7 @@ export function EquipmentPage({ lang, e, onNotice }) {
                                 <th>{e('location')}</th>
                                 <th>{e('condition')}</th>
                                 <th>{e('testedAt')}</th>
-                                <th></th>
+                                <th className="col-actions">{e('actions')}</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -350,13 +350,13 @@ export function EquipmentPage({ lang, e, onNotice }) {
                                     <td>{item.location || '—'}</td>
                                     <td><ConditionValue value={item.condition} e={e} /></td>
                                     <td className="mono">{item.tested_at || '—'}</td>
-                                    <td>
+                                    <td className="col-actions">
                                         <div className="eq-actions">
                                             {!item.tested_at
-                                                ? <button type="button" className="btn sm" onClick={(event) => { event.stopPropagation(); sendToTest(item); }}>{e('sendTest')}</button>
-                                                : <button type="button" className="btn sm" onClick={(event) => { event.stopPropagation(); setPendingReturn(item); }}>{e('returnTest')}</button>}
-                                            <button type="button" className="btn sm" onClick={(event) => { event.stopPropagation(); setCreating(false); setEditing(item); }}>{e('edit')}</button>
-                                            <button type="button" className="btn sm miss" onClick={(event) => { event.stopPropagation(); remove(item); }}>{e('remove')}</button>
+                                                ? <IconButton className="test" label={e('sendTest')} onClick={(event) => { event.stopPropagation(); sendToTest(item); }}><TestIcon /></IconButton>
+                                                : <IconButton className="back" label={e('returnTest')} onClick={(event) => { event.stopPropagation(); setPendingReturn(item); }}><ReturnIcon /></IconButton>}
+                                            <IconButton label={e('edit')} onClick={(event) => { event.stopPropagation(); setCreating(false); setEditing(item); }}><EditIcon /></IconButton>
+                                            <IconButton className="miss" label={e('remove')} onClick={(event) => { event.stopPropagation(); remove(item); }}><TrashIcon /></IconButton>
                                         </div>
                                     </td>
                                 </tr>

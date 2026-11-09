@@ -1,3 +1,5 @@
+import { useState } from 'react';
+
 function Svg({ children, className }) {
     return (
         <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -44,6 +46,50 @@ export function ClockIcon() {
 }
 export function MenuIcon() {
     return <Svg><path d="M4 7h16M4 12h16M4 17h16" /></Svg>;
+}
+export function EditIcon() {
+    return <Svg><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" /></Svg>;
+}
+export function TrashIcon() {
+    return <Svg><path d="M4 7h16" /><path d="M9 7V4h6v3" /><path d="M6 7l1 13h10l1-13" /></Svg>;
+}
+export function TestIcon() {
+    return <Svg><rect x="6" y="4" width="12" height="16" rx="2" /><path d="M9 4.5h6" /><path d="m9 13 2 2 4-4" /></Svg>;
+}
+export function ReturnIcon() {
+    return <Svg><path d="M9 14 4 9l5-5" /><path d="M4 9h10a6 6 0 1 1 0 12H9" /></Svg>;
+}
+
+export function IconButton({ label, className = '', children, onClick, ...props }) {
+    const [tip, setTip] = useState(null);
+
+    function place(target) {
+        const rect = target.getBoundingClientRect();
+        const below = rect.top < 48;
+        setTip({ x: rect.left + rect.width / 2, y: below ? rect.bottom : rect.top, below });
+    }
+
+    return (
+        <>
+            <button
+                type="button"
+                {...props}
+                className={['icon-btn', className].filter(Boolean).join(' ')}
+                aria-label={label}
+                onMouseEnter={(event) => place(event.currentTarget)}
+                onMouseLeave={() => setTip(null)}
+                onFocus={(event) => place(event.currentTarget)}
+                onBlur={() => setTip(null)}
+                onClick={(event) => {
+                    setTip(null);
+                    onClick?.(event);
+                }}
+            >
+                {children}
+            </button>
+            {tip ? <span className={`icon-tip${tip.below ? ' below' : ''}`} style={{ left: tip.x, top: tip.y }} role="tooltip">{label}</span> : null}
+        </>
+    );
 }
 
 const part = (body) => (

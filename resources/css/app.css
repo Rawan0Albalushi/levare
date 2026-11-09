@@ -80,7 +80,8 @@ table.parts .loclist { width: max-content; max-width: 320px; background: transpa
 table.parts .locrow { justify-content: flex-start; gap: 8px; }
 table.parts .locrow .lname { flex: 0 1 auto; font-size: 13px; }
 table.parts .locrow .lq { flex: none; }
-table.parts td:nth-child(7) { white-space: nowrap; }
+table.parts td.priority { white-space: nowrap; }
+.req { direction: ltr; font-weight: 700; white-space: nowrap; color: var(--ink); }
 table.parts .loclist.empty { background: transparent; padding: 0; }
 .td-d { direction: ltr; text-align: left; min-width: 240px; line-height: 1.45; }
 
@@ -268,8 +269,7 @@ table.parts tbody tr.static:hover td { background: transparent; }
 .drawer { position: fixed; z-index: 50; top: 50%; left: 50%; translate: -50% -50%; width: min(760px, calc(100vw - 32px)); max-height: min(88vh, 900px); background: var(--bg); border-radius: 20px; overflow: auto; box-shadow: 0 24px 70px rgba(29,24,56,.28); }
 .dhead { position: sticky; top: 0; background: var(--bg); display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 12px 16px 0; z-index: 2; }
 .dhead .dacts { display: flex; flex-wrap: wrap; gap: 8px; }
-.card-acts { display: flex; gap: 8px; }
-.card-acts .btn { flex: 1; }
+.card-acts { display: flex; gap: 8px; justify-content: flex-end; }
 .cat-picks { display: flex; flex-wrap: wrap; gap: 8px 14px; }
 .cat-picks label, .checkline { display: flex; align-items: center; gap: 6px; font-weight: 600; }
 .loc-edit { display: grid; gap: 8px; }
@@ -282,6 +282,7 @@ table.parts tbody tr.static:hover td { background: transparent; }
 @media (max-width: 560px) {
   .loc-line, .loc-line.has-current { grid-template-columns: 1fr 1fr; }
   .loc-line .loc-remove, .qty-after { grid-column: 1 / -1; }
+  .loc-line .loc-remove { justify-self: end; }
 }
 .x { border: 0; background: var(--surface); width: 40px; height: 40px; border-radius: 12px; cursor: pointer; font-size: 22px; box-shadow: var(--shadow); }
 .dbody { padding: 0 22px 30px; }
@@ -546,7 +547,22 @@ select, textarea { font: inherit; color: inherit; }
 .eq-range { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .eq-bar, .eq-pager { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin: 0 0 14px; }
 .eq-pager { margin-bottom: 28px; }
-.eq-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.eq-actions { display: flex; flex-wrap: nowrap; gap: 6px; align-items: center; }
+table.parts th.col-actions,
+table.parts td.col-actions { text-align: end; white-space: nowrap; width: 1%; }
+.icon-btn { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; padding: 0; border: 1px solid var(--line); border-radius: 10px; background: #fff; color: var(--brand-800); cursor: pointer; }
+.icon-btn svg { width: 16px; height: 16px; }
+.icon-btn:hover { border-color: var(--brand); background: var(--brand-50); color: var(--brand); }
+.icon-btn:focus-visible { outline: 2px solid var(--brand-100); outline-offset: 2px; }
+.icon-btn.miss { color: #dc2626; }
+.icon-btn.miss:hover { border-color: #fecaca; background: #fef2f2; color: #b91c1c; }
+.icon-btn.test { color: var(--brand); }
+.icon-btn.back { color: var(--warn); }
+.icon-btn.back:hover { border-color: #fde68a; background: #fffbeb; color: var(--warn); }
+.icon-tip { position: fixed; z-index: 80; transform: translate(-50%, calc(-100% - 8px)); background: var(--ink); color: #fff; font-size: 12px; font-weight: 700; line-height: 1.2; padding: 6px 8px; border-radius: 8px; pointer-events: none; white-space: nowrap; box-shadow: 0 8px 20px rgba(29, 24, 56, .18); }
+.icon-tip::after { content: ""; position: absolute; left: 50%; bottom: -4px; translate: -50% 0; border: 4px solid transparent; border-top-color: var(--ink); border-bottom: 0; }
+.icon-tip.below { transform: translate(-50%, 8px); }
+.icon-tip.below::after { top: -4px; bottom: auto; border-top: 0; border-bottom: 4px solid var(--ink); }
 .stock-page table.eq-sheet { min-width: 1080px; }
 .stock-page table.eq-sheet td { vertical-align: middle; }
 .form textarea.eq-desc { min-height: 84px; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; width: 100%; resize: vertical; background: #fff; }

@@ -3,7 +3,7 @@ import { api } from '../api';
 import { ConfirmDialog } from '../Confirm';
 import { splitNotes, fmtQ, locsOf, mainCode, sumQ, altList, searchParts, categoryCounts, catalogStats, uniqDesc, groupsOf, nearCodes, looseMatches, inCat, stockOk } from './logic';
 import { PartForm } from './form';
-import { CategoryGlyph, PartGlyph, PinIcon, SearchIcon, CardsIcon, TableIcon, DownloadIcon, UploadIcon } from '../icons';
+import { CategoryGlyph, PartGlyph, PinIcon, SearchIcon, CardsIcon, TableIcon, DownloadIcon, UploadIcon, EditIcon, TrashIcon, IconButton } from '../icons';
 
 export function Notes({ value }) {
     const { main, notes } = splitNotes(value);
@@ -44,8 +44,8 @@ function Locations({ group, max = 3, t }) {
 function PartActions({ part, t, onEdit, onDelete }) {
     return (
         <div className="eq-actions" onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
-            <button type="button" className="btn sm" onClick={() => onEdit(part)}>{t('editPart')}</button>
-            <button type="button" className="btn sm miss" onClick={() => onDelete(part)}>{t('deletePart')}</button>
+            <IconButton label={t('editPart')} onClick={() => onEdit(part)}><EditIcon /></IconButton>
+            <IconButton className="miss" label={t('deletePart')} onClick={() => onDelete(part)}><TrashIcon /></IconButton>
         </div>
     );
 }
@@ -96,7 +96,11 @@ function Mini({ part, why, whyLabels, t, onOpen }) {
     );
 }
 
-function CatalogPartRow({ part, t, onOpen, onEdit, onDelete }) {
+function RequiredQty({ line }) {
+    return <span className="req mono">{fmtQ(line.qty)}{line.u ? ` ${line.u}` : ''}</span>;
+}
+
+function CatalogPartRow({ part, line, t, onOpen, onEdit, onDelete }) {
     return (
         <tr className={part.q > 0 ? 'in' : 'out'} tabIndex={0} onClick={() => onOpen(part)} onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); onOpen(part); } }}>
             <td><div className="thumb"><PartGlyph part={part} /></div></td>
@@ -104,9 +108,10 @@ function CatalogPartRow({ part, t, onOpen, onEdit, onDelete }) {
             <td className="mono">{part.sib.map((item) => <div key={item.k}>{item.id || '—'}</div>)}</td>
             <td className="ltr td-d"><Notes value={part.d} /></td>
             <td>{part.sib.map((item) => <div className="qline" key={item.k}><Qty part={item} outLabel={t('out')} /></div>)}</td>
+            {line ? <td><RequiredQty line={line} /></td> : null}
             <td><Locations group={part.sib} max={4} t={t} /></td>
-            <td><Badges part={part} t={t} /></td>
-            <td>{part.sib.map((item) => <PartActions key={item.k} part={item} t={t} onEdit={onEdit} onDelete={onDelete} />)}</td>
+            <td className="priority"><Badges part={part} t={t} /></td>
+            <td className="col-actions">{part.sib.map((item) => <PartActions key={item.k} part={item} t={t} onEdit={onEdit} onDelete={onDelete} />)}</td>
         </tr>
     );
 }
@@ -164,9 +169,10 @@ function MissingPartRow({ line, t }) {
             <td className="mono">{line.id || '—'}</td>
             <td className="ltr td-d"><Notes value={line.d} /></td>
             <td><span className="qty out">{t('assemblyMissing')}</span></td>
+            <td><RequiredQty line={line} /></td>
             <td><div className="loclist empty"><PinIcon />{t('noLocShort')}</div></td>
-            <td>—</td>
-            <td></td>
+            <td className="priority">—</td>
+            <td className="col-actions"></td>
         </tr>
     );
 }
@@ -182,15 +188,15 @@ function AssemblyLists({ assembly, entries, view, lang, t, onOpen, onEdit, onDel
             {view === 'table' ? (
                 <div className="twrap">
                     <table className="parts">
-                        <thead><tr><th></th><th>{t('partNo')}</th><th>{t('itemCode')}</th><th>{t('description')}</th><th>{t('qty')}</th><th>{t('locations')}</th><th>{t('priority')}</th><th></th></tr></thead>
+                        <thead><tr><th></th><th>{t('partNo')}</th><th>{t('itemCode')}</th><th>{t('description')}</th><th>{t('qty')}</th><th>{t('requiredQty')}</th><th>{t('locations')}</th><th>{t('priority')}</th><th className="col-actions">{t('actions')}</th></tr></thead>
                         <tbody>
                             {sections.map(([section, label]) => {
                                 const lines = entries.filter((entry) => entry.line.section === section);
                                 return (
                                     <Fragment key={section}>
-                                        <tr className="gh"><td colSpan={8}><div className="ghead"><h2>{t(label)}</h2><span className="k">{lines.length}</span></div></td></tr>
+                                        <tr className="gh"><td colSpan={9}><div className="ghead"><h2>{t(label)}</h2><span className="k">{lines.length}</span></div></td></tr>
                                         {lines.map((entry) => (entry.part
-                                            ? <CatalogPartRow key={entry.line.n} part={entry.part} t={t} onOpen={onOpen} onEdit={onEdit} onDelete={onDelete} />
+                                            ? <CatalogPartRow key={entry.line.n} part={entry.part} line={entry.line} t={t} onOpen={onOpen} onEdit={onEdit} onDelete={onDelete} />
                                             : <MissingPartRow key={entry.line.n} line={entry.line} t={t} />))}
                                     </Fragment>
                                 );
@@ -429,7 +435,7 @@ export function CatalogPage({ parts, assemblies = [], lang, t, whyLabels, onNoti
             {view === 'table' ? (
                 <div className="twrap">
                     <table className="parts">
-                        <thead><tr><th></th><th>{t('partNo')}</th><th>{t('itemCode')}</th><th>{t('description')}</th><th>{t('qty')}</th><th>{t('locations')}</th><th>{t('priority')}</th><th></th></tr></thead>
+                        <thead><tr><th></th><th>{t('partNo')}</th><th>{t('itemCode')}</th><th>{t('description')}</th><th>{t('qty')}</th><th>{t('locations')}</th><th>{t('priority')}</th><th className="col-actions">{t('actions')}</th></tr></thead>
                         <tbody>
                             {groups.map((group) => (
                                 <Fragment key={`${group.cat}-${group.label}`}>
@@ -534,8 +540,8 @@ export function PartDrawer({ part, t, whyLabels, onOpen, onClose, onEdit, onDele
             <aside className="drawer on" role="dialog" aria-modal="true" aria-labelledby="part-title">
                 <div className="dhead">
                     <div className="dacts">
-                        <button type="button" className="btn sm" onClick={() => onEdit(part)}>{t('editPart')}</button>
-                        <button type="button" className="btn sm miss" onClick={() => onDelete(part)}>{t('deletePart')}</button>
+                        <IconButton label={t('editPart')} onClick={() => onEdit(part)}><EditIcon /></IconButton>
+                        <IconButton className="miss" label={t('deletePart')} onClick={() => onDelete(part)}><TrashIcon /></IconButton>
                     </div>
                     <button type="button" className="x" onClick={onClose} aria-label={t('close')}>×</button>
                 </div>
