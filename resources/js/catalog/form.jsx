@@ -5,7 +5,7 @@ import { IconButton, TrashIcon } from '../icons';
 const CATEGORIES = ['pump', 'seal', 'motor', 'shaft'];
 
 function blankLocation() {
-    return { id: null, current: 0, add: '', location: '', condition: '', status: '', reference: '' };
+    return { id: null, current: '', original: 0, add: '', location: '', condition: '', status: '', reference: '' };
 }
 
 function fmtQty(value) {
@@ -18,11 +18,22 @@ function addedNumber(value) {
     return Number(text);
 }
 
+function qtyInput(value) {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return '';
+    return String(Math.round(number * 100) / 100);
+}
+
+function sameQty(left, right) {
+    return Math.round(Number(left) * 100) === Math.round(Number(right) * 100);
+}
+
 function fromPart(part) {
     const rows = (part?.L || []).map((row) => ({
         id: row[7] || null,
         location: row[0] || '',
-        current: Number(row[1]) || 0,
+        current: qtyInput(row[1]),
+        original: Number(row[1]) || 0,
         add: '',
         condition: row[4] || '',
         status: row[5] || '',
@@ -70,7 +81,8 @@ export function PartForm({ part, t, onClose, onSaved, onFail }) {
             ...current,
             locations: current.locations.map((row, rowIndex) => (rowIndex === index ? { ...row, [key]: value } : row)),
         }));
-        setErrors((current) => ({ ...current, [`locations.${index}.${key}`]: '' }));
+        const errorKey = key === 'add' ? 'quantity' : key;
+        setErrors((current) => ({ ...current, [`locations.${index}.${errorKey}`]: '' }));
     }
 
     function toggleCategory(category) {
@@ -93,9 +105,11 @@ export function PartForm({ part, t, onClose, onSaved, onFail }) {
         }
         form.locations.forEach((row, index) => {
             const quantity = String(row.add).trim();
-            const used = row.location.trim() || quantity || row.condition.trim();
+            const current = String(row.current).trim();
+            const used = row.location.trim() || quantity || current || row.condition.trim();
             if (!used && !row.id) return;
             if (!row.location.trim()) next[`locations.${index}.location`] = t('needLoc');
+            if (row.id && (current === '' || Number.isNaN(Number(current)) || Number(current) < 0)) next[`locations.${index}.current`] = t('needQty');
             if (quantity && Number.isNaN(Number(quantity))) next[`locations.${index}.quantity`] = t('needQty');
             if (quantity && !Number.isNaN(Number(quantity)) && Number(quantity) < 0) next[`locations.${index}.quantity`] = t('needQty');
         });
@@ -105,16 +119,21 @@ export function PartForm({ part, t, onClose, onSaved, onFail }) {
         const locations = form.locations.flatMap((row) => {
             const location = row.location.trim();
             const quantity = String(row.add).trim();
+            const current = String(row.current).trim();
             const condition = row.condition.trim();
-            if (!row.id && !location && !quantity && !condition) return [];
+            if (!row.id && !location && !quantity && !current && !condition) return [];
+            const addNumber = quantity === '' ? 0 : Number(quantity);
+            const currentNumber = current === '' ? 0 : Number(current);
+            const replaced = Boolean(row.id) && !sameQty(currentNumber, row.original);
             const entry = {
                 location,
-                quantity: quantity === '' ? 0 : Number(quantity),
+                quantity: replaced ? Math.round((currentNumber + addNumber) * 100) / 100 : addNumber,
                 condition: condition || null,
                 status: row.status || null,
                 reference: row.reference || null,
             };
             if (row.id) entry.id = row.id;
+            if (replaced) entry.replace = true;
             return [entry];
         });
 
@@ -201,10 +220,12 @@ export function PartForm({ part, t, onClose, onSaved, onFail }) {
                     </Field>
                     <div>
                         <span className="flabel">{t('locations')}</span>
-                        {form.locations.some((row) => row.id) ? <p className="note-s">{t('addQtyHint')}</p> : null}
+                        {form.locations.some((row) => row.id) ? <p className="note-s">{t('qtyEditHint')}</p> : null}
                         <div className="loc-edit">
                             {form.locations.map((row, index) => {
                                 const added = addedNumber(row.add);
+                                const currentNumber = addedNumber(row.current);
+                                const base = currentNumber === null ? Number(row.original) || 0 : currentNumber;
                                 const quantityLabel = row.id ? t('addQty') : t('qty');
                                 return (
                                     <div className={`loc-line ${row.id ? 'has-current' : ''}`} key={row.id || `new-${index}`}>
@@ -212,8 +233,8 @@ export function PartForm({ part, t, onClose, onSaved, onFail }) {
                                             <input value={row.location} aria-label={t('location')} onChange={(event) => setLocation(index, 'location', event.target.value)} />
                                         </Field>
                                         {row.id ? (
-                                            <Field label={index === 0 ? t('currentQty') : ''}>
-                                                <input className="mono" value={fmtQty(row.current)} readOnly aria-label={t('currentQty')} />
+                                            <Field label={index === 0 ? t('currentQty') : ''} error={errors[`locations.${index}.current`]}>
+                                                <input className="mono" inputMode="decimal" value={row.current} aria-label={t('currentQty')} onChange={(event) => setLocation(index, 'current', event.target.value)} />
                                             </Field>
                                         ) : null}
                                         <Field label={index === 0 ? quantityLabel : ''} error={errors[`locations.${index}.quantity`]}>
@@ -223,7 +244,7 @@ export function PartForm({ part, t, onClose, onSaved, onFail }) {
                                             <input value={row.condition} aria-label={t('cond')} onChange={(event) => setLocation(index, 'condition', event.target.value)} />
                                         </Field>
                                         <IconButton className="miss loc-remove" label={t('deletePart')} onClick={() => setForm((current) => ({ ...current, locations: current.locations.filter((_, rowIndex) => rowIndex !== index) }))}><TrashIcon /></IconButton>
-                                        {row.id && added !== null ? <p className="qty-after">{t('qtyAfter')}: <b className="mono">{fmtQty(row.current + added)}</b></p> : null}
+                                        {row.id && added !== null ? <p className="qty-after">{t('qtyAfter')}: <b className="mono">{fmtQty(base + added)}</b></p> : null}
                                     </div>
                                 );
                             })}

@@ -13,6 +13,7 @@ Route::post('/assemblies/{assembly}/issues', [AssemblyIssueController::class, 's
 Route::get('/catalog', [CatalogController::class, 'show']);
 Route::post('/catalog/import', [CatalogController::class, 'import']);
 Route::post('/parts', [PartController::class, 'store']);
+Route::get('/parts/{part}/adjustments', [PartController::class, 'adjustments']);
 Route::put('/parts/{part}', [PartController::class, 'update']);
 Route::delete('/parts/{part}', [PartController::class, 'destroy']);
 

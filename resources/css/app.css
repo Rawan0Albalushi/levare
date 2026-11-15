@@ -234,6 +234,8 @@ table.parts .loclist.empty { background: transparent; padding: 0; }
 .issue-history .assembly-pn { margin: -8px 0 12px; color: var(--muted); }
 .issue-log { display: grid; gap: 16px; }
 .issue-log time { color: var(--muted); font-size: 13px; }
+.qty-move { display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: baseline; margin: 4px 0 0; }
+.qty-move span { color: var(--muted); }
 table.parts tbody tr.static { cursor: default; }
 table.parts tbody tr.static:hover td { background: transparent; }
 .card.static { cursor: default; }

@@ -36,6 +36,11 @@ class Part extends Model
         return $this->hasMany(PartLocation::class)->orderBy('position');
     }
 
+    public function adjustments(): HasMany
+    {
+        return $this->hasMany(PartQuantityAdjustment::class)->latest('id');
+    }
+
     /**
      * @return array<string, string>
      */

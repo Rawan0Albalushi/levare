@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\Part;
 use App\Models\PartLocation;
+use App\Models\PartQuantityAdjustment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -32,6 +33,17 @@ class PartController extends Controller
         $part->delete();
 
         return response()->json(['deleted' => true]);
+    }
+
+    public function adjustments(Part $part): JsonResponse
+    {
+        $adjustments = $part->adjustments()
+            ->limit(100)
+            ->get()
+            ->map(fn (PartQuantityAdjustment $adjustment): array => $adjustment->toDocument())
+            ->values();
+
+        return response()->json(['adjustments' => $adjustments]);
     }
 
     /**
@@ -69,6 +81,7 @@ class PartController extends Controller
 
     /**
      * A quantity sent for an existing location is added to the stored quantity.
+     * When replace is set, that quantity becomes the stored quantity instead.
      * A quantity sent for a new location is its starting quantity.
      *
      * @param  array<int, array<string, mixed>>  $rows
@@ -79,7 +92,8 @@ class PartController extends Controller
         $kept = [];
 
         foreach (array_values($rows) as $position => $row) {
-            $added = round((float) $row['quantity'], 2);
+            $sent = round((float) $row['quantity'], 2);
+            $replace = (bool) ($row['replace'] ?? false);
 
             if (! empty($row['id'])) {
                 /** @var PartLocation|null $location */
@@ -91,16 +105,24 @@ class PartController extends Controller
                     ]);
                 }
 
+                $before = round((float) $location->quantity, 2);
+                $after = $replace ? $sent : round($before + $sent, 2);
+                $changed = $this->quantityChanged($before, $after);
+
                 $location->fill([
                     'position' => $position,
                     'location' => $row['location'],
-                    'quantity' => round((float) $location->quantity + $added, 2),
-                    'quantity_raw' => $added === 0.0 ? $location->quantity_raw : null,
-                    'updated_on' => $added === 0.0 ? $location->updated_on : now()->toDateString(),
+                    'quantity' => $after,
+                    'quantity_raw' => $changed ? null : $location->quantity_raw,
+                    'updated_on' => $changed ? now()->toDateString() : $location->updated_on,
                     'condition' => $row['condition'] ?? $location->condition,
                     'status' => $row['status'] ?? $location->status,
                     'reference' => $row['reference'] ?? $location->reference,
                 ])->save();
+
+                if ($changed) {
+                    $this->recordAdjustment($part, $location, $replace ? 'set' : 'add', $before, $after);
+                }
 
                 $kept[] = $location->id;
 
@@ -110,14 +132,27 @@ class PartController extends Controller
             $created = $part->locations()->create([
                 'position' => $position,
                 'location' => $row['location'],
-                'quantity' => $added,
+                'quantity' => $sent,
                 'quantity_raw' => null,
-                'updated_on' => $added === 0.0 ? null : now()->toDateString(),
+                'updated_on' => $this->quantityChanged(0, $sent) ? now()->toDateString() : null,
                 'condition' => $row['condition'] ?? null,
                 'status' => $row['status'] ?? null,
                 'reference' => $row['reference'] ?? null,
             ]);
+
+            if ($this->quantityChanged(0, $sent)) {
+                $this->recordAdjustment($part, $created, 'open', 0, $sent);
+            }
+
             $kept[] = $created->id;
+        }
+
+        foreach ($existing->except($kept) as $location) {
+            $before = round((float) $location->quantity, 2);
+
+            if ($this->quantityChanged($before, 0)) {
+                $this->recordAdjustment($part, $location, 'remove', $before, 0);
+            }
         }
 
         if ($kept === []) {
@@ -127,6 +162,22 @@ class PartController extends Controller
         }
 
         $part->locations()->whereNotIn('id', $kept)->delete();
+    }
+
+    private function quantityChanged(float $before, float $after): bool
+    {
+        return number_format($before, 2, '.', '') !== number_format($after, 2, '.', '');
+    }
+
+    private function recordAdjustment(Part $part, PartLocation $location, string $action, float $before, float $after): void
+    {
+        $part->adjustments()->create([
+            'part_location_id' => $location->id,
+            'location' => $location->location,
+            'action' => $action,
+            'quantity_before' => round($before, 2),
+            'quantity_after' => round($after, 2),
+        ]);
     }
 
     /**
@@ -157,6 +208,7 @@ class PartController extends Controller
             'locations.*.id' => $locationId,
             'locations.*.location' => ['required', 'string', 'max:120'],
             'locations.*.quantity' => ['required', 'numeric', 'min:0', 'max:999999999'],
+            'locations.*.replace' => ['sometimes', 'boolean'],
             'locations.*.condition' => ['nullable', 'string', 'max:80'],
             'locations.*.status' => ['nullable', 'string', 'max:80'],
             'locations.*.reference' => ['nullable', 'string', 'max:120'],

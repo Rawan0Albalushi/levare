@@ -225,6 +225,144 @@ class PartTest extends TestCase
         $this->assertSame(0, $part->locations()->count());
     }
 
+    public function test_replacing_the_current_quantity_sets_it_and_records_the_change(): void
+    {
+        $part = Part::query()->create([
+            'part_number' => 'PN-SET',
+            'description' => 'Impeller',
+            'categories' => [],
+            'sort_order' => 1,
+        ]);
+        $location = $part->locations()->create([
+            'position' => 0,
+            'location' => 'G1A1',
+            'quantity' => 100,
+            'quantity_raw' => '100',
+        ]);
+        $other = Part::query()->create([
+            'part_number' => 'PN-OTHER',
+            'description' => 'Sleeve',
+            'categories' => [],
+            'sort_order' => 2,
+        ]);
+
+        $this->putJson('/api/parts/'.$part->id, $this->payload([
+            'part_number' => 'PN-SET',
+            'locations' => [[
+                'id' => $location->id,
+                'location' => 'G1A1',
+                'quantity' => 100,
+                'replace' => true,
+            ]],
+        ]))->assertOk()
+            ->assertJsonPath('part.L.0.1', 100);
+
+        $this->assertSame(0, $part->adjustments()->count());
+
+        $this->putJson('/api/parts/'.$part->id, $this->payload([
+            'part_number' => 'PN-SET',
+            'locations' => [[
+                'id' => $location->id,
+                'location' => 'G1A1',
+                'quantity' => 27,
+                'replace' => true,
+            ]],
+        ]))->assertOk()
+            ->assertJsonPath('part.L.0.1', 27)
+            ->assertJsonPath('part.L.0.2', '');
+
+        $this->assertSame('27.00', $location->fresh()->quantity);
+
+        $this->getJson('/api/parts/'.$part->id.'/adjustments')
+            ->assertOk()
+            ->assertJsonCount(1, 'adjustments')
+            ->assertJsonPath('adjustments.0.action', 'set')
+            ->assertJsonPath('adjustments.0.location', 'G1A1')
+            ->assertJsonPath('adjustments.0.before', 100)
+            ->assertJsonPath('adjustments.0.after', 27);
+
+        $this->getJson('/api/parts/'.$other->id.'/adjustments')
+            ->assertOk()
+            ->assertJsonCount(0, 'adjustments');
+    }
+
+    public function test_an_added_quantity_is_recorded_and_an_unchanged_save_is_not(): void
+    {
+        $part = Part::query()->create([
+            'part_number' => 'PN-LOG',
+            'description' => 'Impeller',
+            'categories' => [],
+            'sort_order' => 1,
+        ]);
+        $location = $part->locations()->create([
+            'position' => 0,
+            'location' => 'G1A1',
+            'quantity' => 100,
+        ]);
+
+        $this->putJson('/api/parts/'.$part->id, $this->payload([
+            'part_number' => 'PN-LOG',
+            'locations' => [[
+                'id' => $location->id,
+                'location' => 'G1A1',
+                'quantity' => 25,
+            ]],
+        ]))->assertOk()
+            ->assertJsonPath('part.L.0.1', 125);
+
+        $this->putJson('/api/parts/'.$part->id, $this->payload([
+            'part_number' => 'PN-LOG',
+            'locations' => [[
+                'id' => $location->id,
+                'location' => 'G1A1',
+                'quantity' => 0,
+            ]],
+        ]))->assertOk()
+            ->assertJsonPath('part.L.0.1', 125);
+
+        $this->getJson('/api/parts/'.$part->id.'/adjustments')
+            ->assertOk()
+            ->assertJsonCount(1, 'adjustments')
+            ->assertJsonPath('adjustments.0.action', 'add')
+            ->assertJsonPath('adjustments.0.before', 100)
+            ->assertJsonPath('adjustments.0.after', 125);
+    }
+
+    public function test_opening_and_removing_a_stocked_location_are_recorded(): void
+    {
+        $created = $this->postJson('/api/parts', $this->payload([
+            'locations' => [['location' => 'A1', 'quantity' => 8]],
+        ]))->assertCreated();
+        $id = $created->json('part.pk');
+
+        $this->putJson('/api/parts/'.$id, $this->payload([
+            'locations' => [],
+        ]))->assertOk()
+            ->assertJsonPath('part.L', []);
+
+        $this->getJson('/api/parts/'.$id.'/adjustments')
+            ->assertOk()
+            ->assertJsonCount(2, 'adjustments')
+            ->assertJsonPath('adjustments.0.action', 'remove')
+            ->assertJsonPath('adjustments.0.location', 'A1')
+            ->assertJsonPath('adjustments.0.before', 8)
+            ->assertJsonPath('adjustments.0.after', 0)
+            ->assertJsonPath('adjustments.1.action', 'open')
+            ->assertJsonPath('adjustments.1.before', 0)
+            ->assertJsonPath('adjustments.1.after', 8);
+    }
+
+    public function test_a_zero_quantity_location_is_not_recorded(): void
+    {
+        $created = $this->postJson('/api/parts', $this->payload([
+            'locations' => [['location' => 'A1', 'quantity' => 0]],
+        ]))->assertCreated();
+
+        $this->getJson('/api/parts/'.$created->json('part.pk').'/adjustments')
+            ->assertOk()
+            ->assertJsonCount(0, 'adjustments');
+    }
+
     public function test_a_part_and_its_locations_can_be_deleted(): void
     {
         $created = $this->postJson('/api/parts', $this->payload())->assertCreated();

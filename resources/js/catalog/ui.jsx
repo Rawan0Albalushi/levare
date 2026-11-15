@@ -3,6 +3,7 @@ import { api } from '../api';
 import { ConfirmDialog } from '../Confirm';
 import { splitNotes, fmtQ, locsOf, mainCode, sumQ, altList, searchParts, categoryCounts, catalogStats, uniqDesc, groupsOf, nearCodes, looseMatches, inCat, stockOk, issuePlans } from './logic';
 import { PartForm } from './form';
+import { QuantityHistory } from './history';
 import { IssueDialog, IssueHistory } from './issue';
 import { CategoryGlyph, PartGlyph, PinIcon, SearchIcon, CardsIcon, TableIcon, DownloadIcon, UploadIcon, EditIcon, TrashIcon, IssueIcon, IconButton } from '../icons';
 
@@ -636,6 +637,7 @@ function Fact({ label, children }) {
 }
 
 export function PartDrawer({ part, t, whyLabels, onOpen, onClose, onEdit, onDelete }) {
+    const [history, setHistory] = useState(false);
     useEffect(() => {
         const previous = document.body.style.overflow;
         document.body.style.overflow = 'hidden';
@@ -653,6 +655,7 @@ export function PartDrawer({ part, t, whyLabels, onOpen, onClose, onEdit, onDele
             <aside className="drawer on" role="dialog" aria-modal="true" aria-labelledby="part-title">
                 <div className="dhead">
                     <div className="dacts">
+                        <button type="button" className="btn sm" onClick={() => setHistory(true)}>{t('qtyHistory')}</button>
                         <IconButton label={t('editPart')} onClick={() => onEdit(part)}><EditIcon /></IconButton>
                         <IconButton className="miss" label={t('deletePart')} onClick={() => onDelete(part)}><TrashIcon /></IconButton>
                     </div>
@@ -723,6 +726,7 @@ export function PartDrawer({ part, t, whyLabels, onOpen, onClose, onEdit, onDele
                     </div>
                 </div>
             </aside>
+            {history ? <QuantityHistory part={part} t={t} onClose={() => setHistory(false)} /> : null}
         </>
     );
 }
