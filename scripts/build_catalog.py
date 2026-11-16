@@ -346,14 +346,18 @@ def classify(path: Path) -> str:
     return "store"
 
 
-def resolve_sources(files: list[Path]) -> tuple[Path, Path]:
+def resolve_sources(files: list[Path], *, defaults: bool = True) -> tuple[Path | None, Path | None]:
     default_store = ROOT / "STORE SPARE PARTS 4.10.26.xlsb"
     default_critical = ROOT / "Critical Parts List 30.7.26.xlsx"
     if not files:
+        if not defaults:
+            return None, None
         return default_store, default_critical
     kinds = [(path, classify(path)) for path in files]
     store = next((path for path, kind in kinds if kind == "store"), None)
     critical = next((path for path, kind in kinds if kind == "critical"), None)
+    if not defaults:
+        return store, critical
     return store or default_store, critical or default_critical
 
 
@@ -361,11 +365,21 @@ def main() -> int:
     args = sys.argv[1:]
     destination = ROOT / "database" / "data" / "parts.json"
     files: list[Path] = []
+    defaults = True
+    split = False
     index = 0
     while index < len(args):
         if args[index] == "--out":
             destination = Path(args[index + 1])
             index += 2
+            continue
+        if args[index] == "--no-defaults":
+            defaults = False
+            index += 1
+            continue
+        if args[index] == "--split":
+            split = True
+            index += 1
             continue
         files.append(Path(args[index]))
         index += 1
@@ -373,20 +387,32 @@ def main() -> int:
     if len(files) == 3 and files[2].suffix.lower() == ".json":
         destination = files[2]
         files = files[:2]
-    store_path, critical_path = resolve_sources(files)
-    store = parse_store(store_path)
-    crit = parse_critical(critical_path)
-    parts = merge_data(store, crit)
-    payload = {
-        "source": {
-            "store": store_path.stem,
-            "critical": critical_path.stem,
-        },
-        "parts": parts,
-    }
+    store_path, critical_path = resolve_sources(files, defaults=defaults)
+    store = parse_store(store_path) if store_path is not None and (defaults or store_path.is_file()) else []
+    crit = parse_critical(critical_path) if critical_path is not None and (defaults or critical_path.is_file()) else {}
+    if split:
+        payload = {
+            "source": {
+                "store": None if store_path is None else store_path.stem,
+                "critical": None if critical_path is None else critical_path.stem,
+            },
+            "store": store,
+            "critical": crit,
+        }
+        count = len({item["id"] or item["pn"] or item["d"] for item in store})
+    else:
+        parts = merge_data(store, crit)
+        payload = {
+            "source": {
+                "store": "Store" if store_path is None else store_path.stem,
+                "critical": None if critical_path is None else critical_path.stem,
+            },
+            "parts": parts,
+        }
+        count = len(parts)
     destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(json.dumps(payload, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
-    print(f"parts {len(parts)} store {len(store)} critical {len(crit)} -> {destination}")
+    print(f"parts {count} store {len(store)} critical {len(crit)} -> {destination}")
     return 0
 
 

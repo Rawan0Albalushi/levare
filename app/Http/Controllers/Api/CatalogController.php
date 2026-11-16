@@ -48,7 +48,7 @@ class CatalogController extends Controller
         }
 
         try {
-            $count = $import->fromSpreadsheets($absolute[0], $absolute[1] ?? null);
+            $count = $import->mergeUploaded($absolute);
         } catch (RuntimeException $exception) {
             return response()->json(['message' => $exception->getMessage()], 422);
         }
