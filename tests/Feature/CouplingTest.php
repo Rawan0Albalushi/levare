@@ -8,6 +8,7 @@ use App\Models\CouplingRule;
 use App\Models\Part;
 use App\Models\PartLocation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class CouplingTest extends TestCase
@@ -244,6 +245,67 @@ class CouplingTest extends TestCase
         $this->assertSame(0, Part::query()->count());
     }
 
+    public function test_an_uploaded_coupling_workbook_replaces_the_table_and_leaves_part_quantity_unchanged(): void
+    {
+        $part = Part::query()->create([
+            'part_number' => 'KEEP-QTY',
+            'description' => 'Keep me',
+            'categories' => [],
+            'sort_order' => 1,
+        ]);
+        PartLocation::query()->create([
+            'part_id' => $part->id,
+            'position' => 1,
+            'location' => 'A1',
+            'quantity' => 7,
+        ]);
+
+        $upload = new UploadedFile(
+            database_path('data/coupling.xlsx'),
+            'coupling.xlsx',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            null,
+            true,
+        );
+
+        $this->post('/api/couplings/import', ['file' => $upload], ['Accept' => 'application/json'])
+            ->assertOk()
+            ->assertJsonPath('pumps', 27)
+            ->assertJsonPath('rules', 47);
+
+        $this->assertSame(7, Part::quantityNumber($part->locations()->value('quantity')));
+        $this->assertSame('25', CouplingPump::query()->where('name', 'ESP B 538-5000')->value('shaft'));
+
+        $this->post('/api/couplings/import', [
+            'file' => UploadedFile::fake()->create('notes.xlsx', 12, 'text/plain'),
+        ], ['Accept' => 'application/json'])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['file']);
+
+        $this->assertSame(27, CouplingPump::query()->count());
+        $this->assertSame(47, CouplingRule::query()->count());
+    }
+
+    public function test_a_coupling_workbook_in_the_wrong_shape_returns_422_and_keeps_the_current_table(): void
+    {
+        $this->importCouplings();
+
+        $upload = new UploadedFile(
+            $this->plainWorkbook(),
+            'other.xlsx',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            null,
+            true,
+        );
+
+        $this->post('/api/couplings/import', ['file' => $upload], ['Accept' => 'application/json'])
+            ->assertUnprocessable()
+            ->assertJsonPath('message', 'The coupling file is not in the expected format.');
+
+        $this->assertSame(27, CouplingPump::query()->count());
+        $this->assertSame(47, CouplingRule::query()->count());
+    }
+
     public function test_a_string_shorter_than_two_pieces_returns_422(): void
     {
         $this->importCouplings();
@@ -259,5 +321,25 @@ class CouplingTest extends TestCase
     private function importCouplings(): void
     {
         app(ImportCouplings::class)->fromWorkbook(database_path('data/coupling.xlsx'));
+    }
+
+    private function plainWorkbook(): string
+    {
+        $path = storage_path('framework/testing/plain-coupling.xlsx');
+        $directory = dirname($path);
+        if (! is_dir($directory)) {
+            mkdir($directory, 0777, true);
+        }
+
+        $zip = new \ZipArchive;
+        $zip->open($path, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+        $zip->addFromString('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>');
+        $zip->addFromString('_rels/.rels', '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>');
+        $zip->addFromString('xl/workbook.xml', '<?xml version="1.0" encoding="UTF-8"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Sheet1" sheetId="1" r:id="rId1"/></sheets></workbook>');
+        $zip->addFromString('xl/_rels/workbook.xml.rels', '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>');
+        $zip->addFromString('xl/worksheets/sheet1.xml', '<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>Hello</t></is></c></row></sheetData></worksheet>');
+        $zip->close();
+
+        return $path;
     }
 }

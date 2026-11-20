@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\ImportCouplings;
 use App\Actions\SuggestCoupling;
 use App\CouplingEnd;
 use App\Http\Controllers\Controller;
 use App\Models\CouplingPump;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use RuntimeException;
 
 class CouplingController extends Controller
 {
@@ -25,6 +28,25 @@ class CouplingController extends Controller
             'pumps' => $pumps,
             'ends' => array_map(fn (CouplingEnd $end): string => $end->value, CouplingEnd::cases()),
         ]);
+    }
+
+    public function import(Request $request, ImportCouplings $import): JsonResponse
+    {
+        $data = $request->validate([
+            'file' => ['required', 'file', 'extensions:xlsx', 'mimes:xlsx', 'max:10240'],
+        ]);
+
+        $stored = $data['file']->storeAs('imports', uniqid('coupling-', true).'.xlsx');
+
+        try {
+            $count = $import->fromWorkbook(Storage::path($stored));
+        } catch (RuntimeException $exception) {
+            return response()->json(['message' => $exception->getMessage()], 422);
+        } finally {
+            Storage::delete($stored);
+        }
+
+        return response()->json($count);
     }
 
     public function suggest(Request $request, SuggestCoupling $suggest): JsonResponse

@@ -619,6 +619,8 @@ table.parts td.col-actions { text-align: end; white-space: nowrap; width: 1%; }
 }
 
 .coupling .hero { text-align: start; }
+.coupling-import { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-top: 4px; }
+.coupling-import p { margin: 0; }
 .coupling-mode { margin: 0 0 18px; }
 .coupling-series { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin-bottom: 18px; }
 .coupling-series .flabel { margin: 0; }

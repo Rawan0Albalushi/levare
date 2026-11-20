@@ -1,5 +1,6 @@
-import { useEffect, useId, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { api } from '../api';
+import { UploadIcon } from '../icons';
 
 const ENDS = ['pump', 'vapro', 'gs', 'intake', 'seal', 'motor'];
 
@@ -33,6 +34,9 @@ export function CouplingPage({ c }) {
     const [result, setResult] = useState(null);
     const [loading, setLoading] = useState(false);
     const [suggestError, setSuggestError] = useState(false);
+    const [importing, setImporting] = useState(false);
+    const [importMessage, setImportMessage] = useState(null);
+    const fileRef = useRef(null);
 
     useEffect(() => {
         let active = true;
@@ -95,6 +99,25 @@ export function CouplingPage({ c }) {
         };
     }, [table, mode, fromEnd, fromPump, toEnd, toPump, pieces, activeSeries]);
 
+    async function importFile(file) {
+        setImporting(true);
+        setImportMessage(null);
+        const body = new FormData();
+        body.append('file', file);
+
+        try {
+            const payload = await api('/api/couplings/import', { method: 'POST', body });
+            const fresh = await api('/api/couplings');
+            setTable(fresh);
+            setLoadError(false);
+            setImportMessage({ ok: true, text: fill(c('imported'), payload) });
+        } catch {
+            setImportMessage({ ok: false, text: c('importErr') });
+        } finally {
+            setImporting(false);
+        }
+    }
+
     function chooseSeries(value) {
         setSeriesTouched(true);
         setSeries(value);
@@ -126,6 +149,14 @@ export function CouplingPage({ c }) {
             <div className="hero">
                 <h1>{c('title')}</h1>
                 <p>{c('sub')}</p>
+                <div className="coupling-import">
+                    <button type="button" className="btn" disabled={importing} onClick={() => fileRef.current?.click()}>
+                        <UploadIcon />
+                        <span>{importing ? c('importing') : c('importExcel')}</span>
+                    </button>
+                    <input ref={fileRef} type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ''; if (file) importFile(file); }} />
+                    {importMessage ? <p className={importMessage.ok ? 'coupling-note' : 'coupling-warn'}>{importMessage.text}</p> : null}
+                </div>
             </div>
             {loadError ? <p className="empty-st">{c('loadErr')}</p> : null}
             {table && pumps.length === 0 ? <p className="empty-st">{c('empty')}</p> : null}
