@@ -14,7 +14,6 @@ Route::post('/assemblies/{assembly}/issues', [AssemblyIssueController::class, 's
 Route::get('/couplings', [CouplingController::class, 'index']);
 Route::get('/couplings/template', [CouplingController::class, 'template']);
 Route::post('/couplings/import', [CouplingController::class, 'import']);
-Route::post('/couplings/included', [CouplingController::class, 'importIncluded']);
 Route::post('/couplings/suggestions', [CouplingController::class, 'suggest']);
 Route::post('/couplings/strings', [CouplingController::class, 'chain']);
 

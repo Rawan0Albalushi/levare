@@ -70,19 +70,6 @@ class CouplingController extends Controller
         return response()->json($count);
     }
 
-    public function importIncluded(ImportCouplings $import): JsonResponse
-    {
-        $path = database_path('data/coupling.xlsx');
-        if (! is_file($path)) {
-            return response()->json([
-                'message' => 'The coupling file is not in the expected format.',
-                'code' => 'format',
-            ], 422);
-        }
-
-        return response()->json($import->fromWorkbook($path));
-    }
-
     public function suggest(Request $request, SuggestCoupling $suggest): JsonResponse
     {
         $data = $request->validate([

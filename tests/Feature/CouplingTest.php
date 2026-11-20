@@ -315,12 +315,12 @@ class CouplingTest extends TestCase
 
         $this->post('/api/couplings/import', ['file' => $upload], ['Accept' => 'application/json'])
             ->assertOk()
-            ->assertJsonPath('pumps', 1)
-            ->assertJsonPath('rules', 1);
+            ->assertJsonPath('pumps', 27)
+            ->assertJsonPath('rules', 47);
 
-        $this->assertSame('ESP B 400-180', CouplingPump::query()->value('name'));
-        $this->assertSame('17', CouplingPump::query()->value('shaft'));
-        $this->assertSame('20019771', CouplingRule::query()->value('part_number'));
+        $this->assertSame('ESP B 400-180', CouplingPump::query()->orderBy('position')->value('name'));
+        $this->assertSame('17', CouplingPump::query()->orderBy('position')->value('shaft'));
+        $this->assertSame('20019771', CouplingRule::query()->where('from_end', 'pump')->where('to_end', 'gs')->where('left_shaft', '17')->value('part_number'));
     }
 
     public function test_a_pasted_sheet_keeps_a_shaft_and_connection_written_only_on_the_first_row(): void
@@ -350,16 +350,6 @@ XML),
         $this->assertSame(['17', '17'], CouplingPump::query()->orderBy('position')->pluck('shaft')->all());
         $this->assertSame(['pump', 'pump'], CouplingRule::query()->orderBy('position')->pluck('from_end')->all());
         $this->assertSame('20017641', CouplingRule::query()->orderByDesc('position')->value('part_number'));
-    }
-
-    public function test_the_included_coupling_workbook_loads_without_an_upload(): void
-    {
-        $this->postJson('/api/couplings/included')
-            ->assertOk()
-            ->assertJsonPath('pumps', 27)
-            ->assertJsonPath('rules', 47);
-
-        $this->assertSame('25', CouplingPump::query()->where('name', 'ESP B 538-5000')->value('shaft'));
     }
 
     public function test_a_coupling_workbook_in_the_wrong_shape_returns_422_and_keeps_the_current_table(): void
