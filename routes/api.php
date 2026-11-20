@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Route;
 Route::get('/assemblies/{assembly}/issues', [AssemblyIssueController::class, 'index']);
 Route::post('/assemblies/{assembly}/issues', [AssemblyIssueController::class, 'store']);
 Route::get('/couplings', [CouplingController::class, 'index']);
+Route::get('/couplings/template', [CouplingController::class, 'template']);
 Route::post('/couplings/import', [CouplingController::class, 'import']);
 Route::post('/couplings/included', [CouplingController::class, 'importIncluded']);
 Route::post('/couplings/suggestions', [CouplingController::class, 'suggest']);

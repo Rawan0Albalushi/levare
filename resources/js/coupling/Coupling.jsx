@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { api } from '../api';
-import { UploadIcon } from '../icons';
+import { DownloadIcon, UploadIcon } from '../icons';
 
 const ENDS = ['pump', 'vapro', 'gs', 'intake', 'seal', 'motor'];
 
@@ -167,6 +167,10 @@ export function CouplingPage({ c }) {
                 <h1>{c('title')}</h1>
                 <p>{c('sub')}</p>
                 <div className="coupling-import">
+                    <a className="btn" href="/api/couplings/template">
+                        <DownloadIcon />
+                        <span>{c('template')}</span>
+                    </a>
                     <button type="button" className="btn" disabled={importing} onClick={() => fileRef.current?.click()}>
                         <UploadIcon />
                         <span>{importing ? c('importing') : c('importExcel')}</span>
@@ -176,6 +180,7 @@ export function CouplingPage({ c }) {
                         <button type="button" className="btn" disabled={importing} onClick={loadIncluded}>{c('importIncluded')}</button>
                     ) : null}
                     {importMessage ? <p className={importMessage.ok ? 'coupling-note' : 'coupling-warn'}>{importMessage.text}</p> : null}
+                    <p className="coupling-note">{c('templateHint')}</p>
                 </div>
             </div>
             {loadError ? <p className="empty-st">{c('loadErr')}</p> : null}

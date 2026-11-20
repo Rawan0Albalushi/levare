@@ -201,6 +201,7 @@ class ReadCouplingWorkbook
     {
         $pumps = [];
         $position = 1;
+        $lastShaft = '';
 
         for ($row = 1; $row < $header; $row++) {
             $name = trim($grid[$row]['B'] ?? '');
@@ -209,6 +210,12 @@ class ReadCouplingWorkbook
             }
 
             $shaft = $this->shaftToken($grid[$row]['F'] ?? '');
+            if ($shaft === '') {
+                $shaft = $lastShaft;
+            }
+            if ($shaft !== '') {
+                $lastShaft = $shaft;
+            }
             $series = $this->series($name);
             if ($shaft === '' || $series === null) {
                 throw new RuntimeException('The coupling file is not in the expected format (row '.$row.').');
@@ -239,6 +246,7 @@ class ReadCouplingWorkbook
     {
         $rules = [];
         $position = 1;
+        $lastEquipment = '';
         $lastRow = max(array_keys($grid));
 
         for ($row = $header + 1; $row <= $lastRow; $row++) {
@@ -249,7 +257,15 @@ class ReadCouplingWorkbook
                 continue;
             }
 
-            $ends = $this->ends(trim($columns['A'] ?? ''), $row);
+            $equipment = trim($columns['A'] ?? '');
+            if ($equipment === '') {
+                $equipment = $lastEquipment;
+            }
+            if ($equipment !== '') {
+                $lastEquipment = $equipment;
+            }
+
+            $ends = $this->ends($equipment, $row);
             $series = $this->series(trim($columns['B'] ?? ''));
             [$left, $right] = $this->shaftPair(trim($columns['C'] ?? ''), $row);
             [$describedLeft, $describedRight] = $this->descriptionShafts($description);

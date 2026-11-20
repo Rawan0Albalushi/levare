@@ -299,6 +299,59 @@ class CouplingTest extends TestCase
         $this->assertSame(47, CouplingRule::query()->count());
     }
 
+    public function test_the_coupling_template_downloads_and_imports_its_sample(): void
+    {
+        $this->get('/api/couplings/template')
+            ->assertOk()
+            ->assertDownload('Levare-coupling-template.xlsx');
+
+        $upload = new UploadedFile(
+            database_path('data/coupling-template.xlsx'),
+            'Levare-coupling-template.xlsx',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            null,
+            true,
+        );
+
+        $this->post('/api/couplings/import', ['file' => $upload], ['Accept' => 'application/json'])
+            ->assertOk()
+            ->assertJsonPath('pumps', 1)
+            ->assertJsonPath('rules', 1);
+
+        $this->assertSame('ESP B 400-180', CouplingPump::query()->value('name'));
+        $this->assertSame('17', CouplingPump::query()->value('shaft'));
+        $this->assertSame('20019771', CouplingRule::query()->value('part_number'));
+    }
+
+    public function test_a_pasted_sheet_keeps_a_shaft_and_connection_written_only_on_the_first_row(): void
+    {
+        $upload = new UploadedFile(
+            $this->workbookFromSheet(<<<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>
+<row r="2"><c r="B2" t="inlineStr"><is><t>ESP B 400-180</t></is></c><c r="F2" t="inlineStr"><is><t>17</t></is></c></row>
+<row r="3"><c r="B3" t="inlineStr"><is><t>ESP B 400-400</t></is></c></row>
+<row r="4"><c r="A4" t="inlineStr"><is><t>Equipment</t></is></c><c r="B4" t="inlineStr"><is><t>Series</t></is></c><c r="C4" t="inlineStr"><is><t>Shaft</t></is></c><c r="D4" t="inlineStr"><is><t>Description</t></is></c><c r="F4" t="inlineStr"><is><t>P/N</t></is></c></row>
+<row r="5"><c r="A5" t="inlineStr"><is><t>Pump-GS</t></is></c><c r="B5" t="inlineStr"><is><t>B 400-400</t></is></c><c r="C5" t="inlineStr"><is><t>17×22</t></is></c><c r="D5" t="inlineStr"><is><t>Coupling, integral 17mm INV 15T x 22mm INV 20T LG: 73mm</t></is></c><c r="F5" t="inlineStr"><is><t>20019771</t></is></c></row>
+<row r="6"><c r="B6" t="inlineStr"><is><t>B 400-400</t></is></c><c r="C6" t="inlineStr"><is><t>20×22</t></is></c><c r="D6" t="inlineStr"><is><t>Coupling, integral 20mm INV 18T x 22mm INV 20T LG: 73mm</t></is></c><c r="F6" t="inlineStr"><is><t>20017641</t></is></c></row>
+</sheetData></worksheet>
+XML),
+            'pasted.xlsx',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            null,
+            true,
+        );
+
+        $this->post('/api/couplings/import', ['file' => $upload], ['Accept' => 'application/json'])
+            ->assertOk()
+            ->assertJsonPath('pumps', 2)
+            ->assertJsonPath('rules', 2);
+
+        $this->assertSame(['17', '17'], CouplingPump::query()->orderBy('position')->pluck('shaft')->all());
+        $this->assertSame(['pump', 'pump'], CouplingRule::query()->orderBy('position')->pluck('from_end')->all());
+        $this->assertSame('20017641', CouplingRule::query()->orderByDesc('position')->value('part_number'));
+    }
+
     public function test_the_included_coupling_workbook_loads_without_an_upload(): void
     {
         $this->postJson('/api/couplings/included')
@@ -349,7 +402,12 @@ class CouplingTest extends TestCase
 
     private function plainWorkbook(): string
     {
-        $path = storage_path('framework/testing/plain-coupling.xlsx');
+        return $this->workbookFromSheet('<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>Hello</t></is></c></row></sheetData></worksheet>');
+    }
+
+    private function workbookFromSheet(string $sheet): string
+    {
+        $path = storage_path('framework/testing/'.uniqid('coupling-', true).'.xlsx');
         $directory = dirname($path);
         if (! is_dir($directory)) {
             mkdir($directory, 0777, true);
@@ -361,7 +419,7 @@ class CouplingTest extends TestCase
         $zip->addFromString('_rels/.rels', '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>');
         $zip->addFromString('xl/workbook.xml', '<?xml version="1.0" encoding="UTF-8"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="Sheet1" sheetId="1" r:id="rId1"/></sheets></workbook>');
         $zip->addFromString('xl/_rels/workbook.xml.rels', '<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>');
-        $zip->addFromString('xl/worksheets/sheet1.xml', '<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData><row r="1"><c r="A1" t="inlineStr"><is><t>Hello</t></is></c></row></sheetData></worksheet>');
+        $zip->addFromString('xl/worksheets/sheet1.xml', $sheet);
         $zip->close();
 
         return $path;

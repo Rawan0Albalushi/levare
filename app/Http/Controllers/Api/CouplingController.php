@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use RuntimeException;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class CouplingController extends Controller
 {
@@ -28,6 +29,14 @@ class CouplingController extends Controller
             'pumps' => $pumps,
             'ends' => array_map(fn (CouplingEnd $end): string => $end->value, CouplingEnd::cases()),
         ]);
+    }
+
+    public function template(): BinaryFileResponse
+    {
+        $path = database_path('data/coupling-template.xlsx');
+        abort_unless(is_file($path), 404);
+
+        return response()->download($path, 'Levare-coupling-template.xlsx');
     }
 
     public function import(Request $request, ImportCouplings $import): JsonResponse
