@@ -289,11 +289,24 @@ class CouplingTest extends TestCase
             ->assertJsonPath('pumps', 27)
             ->assertJsonPath('rules', 47);
 
+        $detectedAsBytes = new UploadedFile(
+            database_path('data/coupling.xlsx'),
+            'coupling.xlsx',
+            'application/octet-stream',
+            null,
+            true,
+        );
+
+        $this->post('/api/couplings/import', ['file' => $detectedAsBytes], ['Accept' => 'application/json'])
+            ->assertOk()
+            ->assertJsonPath('pumps', 27)
+            ->assertJsonPath('rules', 47);
+
         $this->post('/api/couplings/import', [
             'file' => UploadedFile::fake()->create('notes.xlsx', 12, 'text/plain'),
         ], ['Accept' => 'application/json'])
             ->assertUnprocessable()
-            ->assertJsonValidationErrors(['file']);
+            ->assertJsonPath('code', 'format');
 
         $this->assertSame(27, CouplingPump::query()->count());
         $this->assertSame(47, CouplingRule::query()->count());

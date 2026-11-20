@@ -42,13 +42,7 @@ class CouplingController extends Controller
     public function import(Request $request, ImportCouplings $import): JsonResponse
     {
         $data = $request->validate([
-            'file' => [
-                'required',
-                'file',
-                'extensions:xlsx',
-                'mimetypes:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/zip,application/x-zip-compressed',
-                'max:10240',
-            ],
+            'file' => ['required', 'file', 'extensions:xlsx', 'max:10240'],
         ]);
 
         $stored = $data['file']->storeAs('imports', uniqid('coupling-', true).'.xlsx');
@@ -57,6 +51,13 @@ class CouplingController extends Controller
         }
 
         try {
+            if (! $this->isSpreadsheetZip(Storage::path($stored))) {
+                return response()->json([
+                    'message' => 'The coupling file is not in the expected format.',
+                    'code' => 'format',
+                ], 422);
+            }
+
             $count = $import->fromWorkbook(Storage::path($stored));
         } catch (RuntimeException $exception) {
             return response()->json([
@@ -68,6 +69,19 @@ class CouplingController extends Controller
         }
 
         return response()->json($count);
+    }
+
+    private function isSpreadsheetZip(string $path): bool
+    {
+        $handle = fopen($path, 'rb');
+        if ($handle === false) {
+            return false;
+        }
+
+        $header = fread($handle, 4);
+        fclose($handle);
+
+        return in_array($header, ["PK\x03\x04", "PK\x05\x06", "PK\x07\x08"], true);
     }
 
     public function suggest(Request $request, SuggestCoupling $suggest): JsonResponse
