@@ -11,6 +11,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             PartsCatalogSeeder::class,
             AssemblySeeder::class,
+            CouplingSeeder::class,
         ]);
     }
 }

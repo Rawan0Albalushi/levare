@@ -4,8 +4,9 @@ import { api } from './api';
 import { prepareCatalog } from './catalog/logic';
 import { CatalogPage } from './catalog/ui';
 import { EquipmentPage } from './equipment/Equipment';
-import { EquipmentIcon, MenuIcon, PartsIcon, StockIcon } from './icons';
-import { equipmentText, stockText, text } from './i18n';
+import { CouplingPage } from './coupling/Coupling';
+import { CouplingIcon, EquipmentIcon, MenuIcon, PartsIcon, StockIcon } from './icons';
+import { couplingText, equipmentText, stockText, text } from './i18n';
 import { StocktakePage } from './stock/Stocktake';
 
 export default function App() {
@@ -18,6 +19,7 @@ export default function App() {
     const t = (key) => text[lang][key];
     const s = (key) => stockText[lang][key];
     const e = (key) => equipmentText[lang][key];
+    const c = (key) => couplingText[lang][key];
     const langRef = useRef(lang);
     const loadedRef = useRef(false);
     langRef.current = lang;
@@ -58,6 +60,9 @@ export default function App() {
                     <NavLink to="/" end className={({ isActive }) => (isActive ? 'on' : '')} onClick={() => setMenu(false)}>
                         <PartsIcon /><span>{t('navParts')}</span>
                     </NavLink>
+                    <NavLink to="/couplings" className={({ isActive }) => (isActive ? 'on' : '')} onClick={() => setMenu(false)}>
+                        <CouplingIcon /><span>{t('navCoupling')}</span>
+                    </NavLink>
                     <NavLink to="/stock" className={({ isActive }) => (isActive ? 'on' : '')} onClick={() => setMenu(false)}>
                         <StockIcon /><span>{t('navStock')}</span>
                     </NavLink>
@@ -84,6 +89,7 @@ export default function App() {
                 <Routes>
                     <Route path="/" element={<CatalogPage parts={prepared.parts} assemblies={catalog.assemblies || []} lang={lang} t={t} whyLabels={text[lang].why} onNotice={setNotice} onReload={loadCatalog} />} />
                     <Route path="/stock/*" element={<StocktakePage parts={prepared.parts} lang={lang} t={t} s={s} onNotice={setNotice} />} />
+                    <Route path="/couplings" element={<CouplingPage lang={lang} c={c} />} />
                     <Route path="/equipment" element={<EquipmentPage lang={lang} e={e} onNotice={setNotice} />} />
                 </Routes>
             ) : null}

@@ -17,6 +17,9 @@ export function StockIcon() {
 export function EquipmentIcon() {
     return <Svg><path d="M4 14a8 8 0 0 1 16 0" /><path d="M12 14 16 9" /><path d="M12 14h.01" /><path d="M5 19h14" /></Svg>;
 }
+export function CouplingIcon() {
+    return <Svg><path d="M4 9h6v6H4zM14 9h6v6h-6zM10 12h4" /></Svg>;
+}
 export function SearchIcon() {
     return <Svg className="ico"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.6-3.6" /></Svg>;
 }
