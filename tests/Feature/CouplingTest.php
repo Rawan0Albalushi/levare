@@ -276,6 +276,19 @@ class CouplingTest extends TestCase
         $this->assertSame(7, Part::quantityNumber($part->locations()->value('quantity')));
         $this->assertSame('25', CouplingPump::query()->where('name', 'ESP B 538-5000')->value('shaft'));
 
+        $detectedAsZip = new UploadedFile(
+            database_path('data/coupling.xlsx'),
+            'coupling.xlsx',
+            'application/zip',
+            null,
+            true,
+        );
+
+        $this->post('/api/couplings/import', ['file' => $detectedAsZip], ['Accept' => 'application/json'])
+            ->assertOk()
+            ->assertJsonPath('pumps', 27)
+            ->assertJsonPath('rules', 47);
+
         $this->post('/api/couplings/import', [
             'file' => UploadedFile::fake()->create('notes.xlsx', 12, 'text/plain'),
         ], ['Accept' => 'application/json'])
@@ -284,6 +297,16 @@ class CouplingTest extends TestCase
 
         $this->assertSame(27, CouplingPump::query()->count());
         $this->assertSame(47, CouplingRule::query()->count());
+    }
+
+    public function test_the_included_coupling_workbook_loads_without_an_upload(): void
+    {
+        $this->postJson('/api/couplings/included')
+            ->assertOk()
+            ->assertJsonPath('pumps', 27)
+            ->assertJsonPath('rules', 47);
+
+        $this->assertSame('25', CouplingPump::query()->where('name', 'ESP B 538-5000')->value('shaft'));
     }
 
     public function test_a_coupling_workbook_in_the_wrong_shape_returns_422_and_keeps_the_current_table(): void
@@ -300,7 +323,8 @@ class CouplingTest extends TestCase
 
         $this->post('/api/couplings/import', ['file' => $upload], ['Accept' => 'application/json'])
             ->assertUnprocessable()
-            ->assertJsonPath('message', 'The coupling file is not in the expected format.');
+            ->assertJsonPath('message', 'The coupling file is not in the expected format.')
+            ->assertJsonPath('code', 'format');
 
         $this->assertSame(27, CouplingPump::query()->count());
         $this->assertSame(47, CouplingRule::query()->count());

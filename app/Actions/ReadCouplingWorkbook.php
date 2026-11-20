@@ -34,10 +34,10 @@ class ReadCouplingWorkbook
         }
 
         $shared = $zip->getFromName('xl/sharedStrings.xml');
-        $sheet = $zip->getFromName('xl/worksheets/sheet1.xml');
+        $sheet = $this->firstSheet($zip);
         $zip->close();
 
-        if (! is_string($sheet) || $sheet === '') {
+        if ($sheet === null) {
             throw new RuntimeException('The coupling file is not in the expected format.');
         }
 
@@ -64,6 +64,51 @@ class ReadCouplingWorkbook
         }
 
         return $grid;
+    }
+
+    private function firstSheet(ZipArchive $zip): ?string
+    {
+        $sheet = $this->sheetFromWorkbook($zip) ?? $zip->getFromName('xl/worksheets/sheet1.xml');
+
+        return is_string($sheet) && $sheet !== '' ? $sheet : null;
+    }
+
+    private function sheetFromWorkbook(ZipArchive $zip): ?string
+    {
+        $workbook = $zip->getFromName('xl/workbook.xml');
+        $rels = $zip->getFromName('xl/_rels/workbook.xml.rels');
+        if (! is_string($workbook) || ! is_string($rels) || $workbook === '' || $rels === '') {
+            return null;
+        }
+
+        $sheets = $this->nodes($this->xml($workbook), '//m:sheets/m:sheet');
+        $sheet = $sheets[0] ?? null;
+        if (! $sheet instanceof SimpleXMLElement) {
+            return null;
+        }
+
+        $id = (string) $sheet->attributes('http://schemas.openxmlformats.org/officeDocument/2006/relationships')['id'];
+        if (preg_match('/^rId\d+$/', $id) !== 1) {
+            return null;
+        }
+
+        $relationships = simplexml_load_string($rels);
+        if (! $relationships instanceof SimpleXMLElement) {
+            return null;
+        }
+
+        $relationships->registerXPathNamespace('r', 'http://schemas.openxmlformats.org/package/2006/relationships');
+        $matches = $relationships->xpath('//r:Relationship[@Id="'.$id.'"]');
+        $target = is_array($matches) ? (string) ($matches[0]['Target'] ?? '') : '';
+        if ($target === '' || str_contains($target, '..')) {
+            return null;
+        }
+
+        $target = ltrim($target, '/');
+        $path = str_starts_with($target, 'xl/') ? $target : 'xl/'.$target;
+        $contents = $zip->getFromName($path);
+
+        return is_string($contents) && $contents !== '' ? $contents : null;
     }
 
     /**

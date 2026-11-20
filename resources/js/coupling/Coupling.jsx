@@ -111,8 +111,25 @@ export function CouplingPage({ c }) {
             setTable(fresh);
             setLoadError(false);
             setImportMessage({ ok: true, text: fill(c('imported'), payload) });
-        } catch {
-            setImportMessage({ ok: false, text: c('importErr') });
+        } catch (error) {
+            setImportMessage({ ok: false, text: error.code === 'format' ? c('importFormat') : c('importErr') });
+        } finally {
+            setImporting(false);
+        }
+    }
+
+    async function loadIncluded() {
+        setImporting(true);
+        setImportMessage(null);
+
+        try {
+            const payload = await api('/api/couplings/included', { method: 'POST' });
+            const fresh = await api('/api/couplings');
+            setTable(fresh);
+            setLoadError(false);
+            setImportMessage({ ok: true, text: fill(c('imported'), payload) });
+        } catch (error) {
+            setImportMessage({ ok: false, text: error.code === 'format' ? c('importFormat') : c('importErr') });
         } finally {
             setImporting(false);
         }
@@ -155,6 +172,9 @@ export function CouplingPage({ c }) {
                         <span>{importing ? c('importing') : c('importExcel')}</span>
                     </button>
                     <input ref={fileRef} type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden onChange={(event) => { const file = event.target.files?.[0]; event.target.value = ''; if (file) importFile(file); }} />
+                    {table && pumps.length === 0 ? (
+                        <button type="button" className="btn" disabled={importing} onClick={loadIncluded}>{c('importIncluded')}</button>
+                    ) : null}
                     {importMessage ? <p className={importMessage.ok ? 'coupling-note' : 'coupling-warn'}>{importMessage.text}</p> : null}
                 </div>
             </div>

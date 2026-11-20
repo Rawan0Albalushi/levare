@@ -13,6 +13,7 @@ Route::get('/assemblies/{assembly}/issues', [AssemblyIssueController::class, 'in
 Route::post('/assemblies/{assembly}/issues', [AssemblyIssueController::class, 'store']);
 Route::get('/couplings', [CouplingController::class, 'index']);
 Route::post('/couplings/import', [CouplingController::class, 'import']);
+Route::post('/couplings/included', [CouplingController::class, 'importIncluded']);
 Route::post('/couplings/suggestions', [CouplingController::class, 'suggest']);
 Route::post('/couplings/strings', [CouplingController::class, 'chain']);
 

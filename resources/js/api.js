@@ -10,6 +10,7 @@ export async function api(url, options = {}) {
         const error = new Error(payload.message || 'Request failed');
         error.status = response.status;
         error.errors = payload.errors || {};
+        error.code = payload.code || '';
         throw error;
     }
 
